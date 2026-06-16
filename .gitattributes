@@ -1,0 +1,12 @@
+# Normalize all text files to LF on commit
+* text=auto eol=lf
+
+# Explicit rules for common file types
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf
+*.sh text eol=lf

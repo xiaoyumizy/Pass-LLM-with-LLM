@@ -102,6 +102,14 @@ Read the problem statement, match keywords, then copy the template from `referen
 | "modify string", "replace at position" | `references/exam-patterns.md` §4d (String Modify) |
 | "bracket", "parentheses", "balanced", "valid" | `references/exam-patterns.md` §4e (Bracket Match) |
 | "formula", "arithmetic", "prime", "modular" | `references/exam-patterns.md` §4f (Math Derivation) |
+| "dp[i]", "climbing stairs", "subsequence", "longest increasing" | `references/algo-skeletons.md` §3i (1D DP) |
+| "grid path", "knapsack", "edit distance", "dp[i][j]" | `references/algo-skeletons.md` §3j (2D DP) |
+| "next greater", "histogram area", "temperature", "单调栈" | `references/algo-skeletons.md` §3k (Monotonic Stack) |
+| "sliding window max/min", "variable window", "单调队列" | `references/algo-skeletons.md` §3l (Monotonic Deque) |
+| "activity selection", "interval scheduling", "贪心" | `references/algo-skeletons.md` §3m (Greedy) |
+| "range add", "interval increment", "差分" | `references/algo-skeletons.md` §3n (Difference Array) |
+| "XOR", "bitmask", "subset enumeration", "位运算" | `references/algo-skeletons.md` §3o (Bit Manipulation) |
+| "pattern matching", "KMP", "substring search", "回文" | `references/algo-skeletons.md` §3p (String Processing) |
 | None of the above — combine patterns or novel structure | Fallback: copy the 5-phase structure, fill Algorithm with raw loops + data structures |
 
 ### I/O Mode Selection

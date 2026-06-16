@@ -4,33 +4,35 @@
 
 ## P0 Must Practice First
 
-| Topic | Why It Matters | AC Standard |
-|---|---|---|
-| Hash / dict / set | 高频统计、去重、两数关系 | 20 分钟内写出 |
-| Sorting | 贪心、双指针、区间题基础 | 能解释排序 key |
-| Binary Search | 边界与二分答案常见 | 能写 `lower_bound` |
-| Prefix Sum | 区间和、计数、差分基础 | 会结合哈希 |
-| Sliding Window | 字符串和子数组高频 | 左右指针条件清楚 |
-| Two Pointers | 排序数组、去重、合并 | 不漏边界 |
+| Topic | Why It Matters | AC Standard | Practice |
+|---|---|---|---|
+| Hash / dict / set | 高频统计、去重、两数关系 | 20 分钟内写出 | — |
+| Sorting | 贪心、双指针、区间题基础 | 能解释排序 key | — |
+| Binary Search | 边界与二分答案常见 | 能写 `lower_bound` | — |
+| Prefix Sum | 区间和、计数、差分基础 | 会结合哈希 | — |
+| Sliding Window | 字符串和子数组高频 | 左右指针条件清楚 | `practice/sliding_window.py` |
+| Two Pointers | 排序数组、去重、合并 | 不漏边界 | `practice/two_pointers.py` |
 
 ## P1 Need Solid Coverage
 
-| Topic | Why It Matters | AC Standard |
-|---|---|---|
-| Greedy | 中等题常见 | 能说出局部选择 |
-| BFS / DFS | 图、树、网格 | visited 时机正确 |
-| Heap / Top-K | 排名、调度、流式数据 | 会用 `heapq` |
-| Simple DP | 一维/二维基础 | 状态定义清晰 |
-| String Processing | 输入、匹配、计数 | 注意下标和空串 |
+| Topic | Why It Matters | AC Standard | Practice |
+|---|---|---|---|
+| Greedy | 中等题常见 | 能说出局部选择 | `practice/greedy.py` |
+| BFS / DFS | 图、树、网格 | visited 时机正确 | `practice/bfs_grid.py` |
+| Heap / Top-K | 排名、调度、流式数据 | 会用 `heapq` | — |
+| Simple DP | 一维/二维基础 | 状态定义清晰 | `practice/dp_basics.py`, `practice/dp_grid_knapsack.py` |
+| String Processing | 输入、匹配、计数 | 注意下标和空串 | `practice/string_matching.py` |
 
 ## P2 Optional If Time Allows
 
-| Topic | Why It Matters | AC Standard |
-|---|---|---|
-| Union Find | 连通性题 | 会路径压缩 |
-| Monotonic Stack | 下一个更大/更小 | 识别模板 |
-| Backtracking | 组合枚举 | 会剪枝 |
-| Difference Array | 区间增减 | 会还原前缀 |
+| Topic | Why It Matters | AC Standard | Practice |
+|---|---|---|---|
+| Union Find | 连通性题 | 会路径压缩 | — |
+| Monotonic Stack | 下一个更大/更小 | 识别模板 | `practice/monotonic_stack.py` |
+| Monotonic Deque | 滑动窗口最值 | 识别模板 | `practice/monotonic_stack.py` §3 |
+| Backtracking | 组合枚举 | 会剪枝 | — |
+| Difference Array | 区间增减 | 会还原前缀 | `practice/difference_array.py` |
+| Bit Manipulation | XOR、位掩码、子集枚举 | 会基本操作 | `practice/bit_manipulation.py` |
 
 ## Daily Target
 
