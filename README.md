@@ -104,6 +104,38 @@ All skills degrade gracefully to local-only mode when MCP is unavailable. See [M
 
 All skills with "Optional" MCP degrade gracefully to local-only mode when MCP is unavailable.
 
+## Roadmap
+
+### V1 (Current) — Stable
+
+- Skill Pipeline: solve-skeleton / solve-analyze / algo-annotation
+- Choice question engine: create / drill / scoring
+- exam-memory MCP V1: local file-based experience CRUD + user profiling
+- Progress tracking and mistake feedback loop
+
+### V2 — RAG + Semantic Retrieval
+
+Upgrade `exam-memory` from keyword matching to semantic search:
+
+| Phase | Feature | Dependencies |
+|-------|---------|--------------|
+| 1 | Experience auto-vectorization → ChromaDB | `chromadb`, `langchain` |
+| 2 | `list_experiences` supports semantic retrieval | Phase 1 |
+| 3 | LangChain Agent auto-infers user profile | `langchain`, LLM API |
+| 4 | Knowledge graph for prerequisite recommendations | Phase 1 |
+
+### V3 — Long-term Directions
+
+- **Multimodal**: screenshot OCR → auto problem-type detection + experience retrieval
+- **Spaced repetition**: SM-2 based review scheduling
+- **Cross-device sync**: Git or WebDAV for experience files
+- **Analytics dashboard**: strength/weakness heatmap, error trends, review plan
+
+### Open Source Improvements
+
+- GitHub issue & PR templates (`.github/`)
+- `CHANGELOG.md`
+
 ## Directory Structure
 
 ```
