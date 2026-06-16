@@ -104,6 +104,38 @@ git clone → cd pass-llm-with-llm
 
 标记"可选"的 Skill 在 MCP 不可用时自动降级为纯本地模式。
 
+## 路线图
+
+### V1（当前）— 稳定版
+
+- Skill Pipeline：solve-skeleton / solve-analyze / algo-annotation
+- 选择题引擎：出题 / 答题 / 评分
+- exam-memory MCP V1：本地文件式经验 CRUD + 用户画像
+- 进度追踪与错题反馈闭环
+
+### V2 — RAG + 语义检索
+
+将 `exam-memory` 从关键词匹配升级为语义检索：
+
+| 阶段 | 特性 | 依赖 |
+|------|------|------|
+| 1 | 经验文件自动向量化 → ChromaDB | `chromadb`, `langchain` |
+| 2 | `list_experiences` 支持语义检索 | 阶段 1 |
+| 3 | LangChain Agent 自动推断用户画像 | `langchain`, LLM API |
+| 4 | 知识图谱关联推荐前置知识点 | 阶段 1 |
+
+### V3 — 远期方向
+
+- **多模态**：截图题目 OCR → 自动识别题型并检索经验
+- **间隔重复**：基于 SM-2 算法自动安排复习
+- **跨设备同步**：Git 或 WebDAV 同步经验文件
+- **可视化仪表盘**：强弱项热力图、错误趋势、复习计划
+
+### 开源改进
+
+- GitHub Issue & PR 模板（`.github/`）
+- `CHANGELOG.md`
+
 ## 目录结构
 
 ```
