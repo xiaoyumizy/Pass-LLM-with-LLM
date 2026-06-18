@@ -743,9 +743,11 @@ class QuestionBank:
 
     def import_from_dir(self, path: str | Path) -> int:
         """批量导入 Markdown 题库文件到 bank/。返回导入条数。"""
-        src = Path(path)
+        src = Path(path).resolve()
         if not src.is_dir():
             raise ValueError(f"目录不存在：{path}")
+        if not src.is_relative_to(Path.cwd().resolve()):
+            raise ValueError(f"导入路径超出项目目录: {path}")
 
         # 建立已有文件的索引: (type, knowledge) -> filename
         existing: set[tuple[str, str]] = set()

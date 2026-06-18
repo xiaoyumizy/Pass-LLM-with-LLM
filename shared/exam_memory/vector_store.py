@@ -114,7 +114,11 @@ class NumpyVectorStore:
         embeddings = encode_safe(texts)
         if embeddings is None:
             if verbose:
-                print("[vector_store] embedding 不可用，重建跳过")
+                import warnings
+                warnings.warn(
+                    "[vector_store] embedding 不可用，将清除已有索引",
+                    RuntimeWarning,
+                )
             self.clear()
             return 0
 

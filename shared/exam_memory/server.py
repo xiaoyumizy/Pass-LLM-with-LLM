@@ -501,7 +501,11 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 
     # ── update_user_profile ──
     if name == "update_user_profile":
+        _ALLOWED_PROFILE_KEYS = {"preferences", "strengths", "weaknesses", "goals", "study_plan"}
         diff = arguments["diff"]
+        invalid_keys = set(diff.keys()) - _ALLOWED_PROFILE_KEYS
+        if invalid_keys:
+            return [TextContent(type="text", text=f"不允许的 profile 字段: {invalid_keys}")]
         if PROFILE_PATH.exists():
             profile = json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
         else:
@@ -520,6 +524,9 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     if name == "mount_source":
         try:
             config_path = Path(arguments.get("config_path", "")) if arguments.get("config_path") else SOURCES_YAML_PATH
+            config_path = config_path.resolve()
+            if not config_path.is_relative_to(BASE_DIR.resolve()):
+                return [TextContent(type="text", text=f"非法配置路径: {config_path}")]
             if not config_path.exists():
                 return [TextContent(type="text", text=f"配置文件不存在: {config_path}")]
             with open(config_path, encoding="utf-8") as f:
