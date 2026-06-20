@@ -21,8 +21,8 @@ If you have ideas, describe a feasible implementation approach.
 ## Affected Components / 涉及组件
 
 - [ ] Skill definition (`skills/`)
-- [ ] MCP Server (`exam_memory/`)
-- [ ] Algorithm templates (`algorithms/`)
-- [ ] Cheatsheet / quick notes (`llm/`)
-- [ ] Documentation (`docs/`, `README`)
+- [ ] MCP Server (`shared/exam_memory/`)
+- [ ] Target material (`targets/{target}/`)
+- [ ] Shared cheatsheets or prompts (`shared/`, `prompts/`)
+- [ ] Public documentation (`README`, `README_CN`, `START_HERE`, `AGENTS`, `CONTRIBUTING`)
 - [ ] Other: ___

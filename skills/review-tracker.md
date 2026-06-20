@@ -14,6 +14,7 @@ description: >
 汇总为一份可执行的进度报告，让用户在 2 分钟内知道"现在在哪、还差什么、下一步做什么"。
 
 核心原则：**数据驱动复习决策** — 不凭感觉，凭 mistake_log 错误频率、topic_checklist 覆盖率、readiness_score 趋势做判断。
+在 Lite/Portable Mode 下，缺失数据也不能阻塞报告；缺什么就写"暂无数据"，并给出今天能立刻执行的三项任务。
 
 ## When to Use
 
@@ -41,7 +42,7 @@ description: >
 | `shared/daily/YYYY-MM-DD.md` (昨天) | 对比昨天进度 | 进步/退步对比 |
 | `targets/{target}/progress/choice-questions/round*.md` | 选择题 Round 成绩 | 选择题趋势 |
 | `targets/{target}/progress/exam-analysis/exam-style-analysis.md` §6 | 知识点掌握进度表 | 掌握进度 |
-| `targets/{target}/progress/reviews/review-YYYY-MM-DD.md` | 周期性复习总结（可选） | 复习总结 |
+| `targets/{target}/progress/reviews/review-queue.md` | 到期复习项数量 + 列表 | 到期复习 |
 
 ## 工作流
 
@@ -113,6 +114,9 @@ digraph review {
            mock_score: str | null,
            coverage_gaps: [str] }
 
+9. `targets/{target}/progress/reviews/review-queue.md`
+   返回：{ due_count: int, due_items: [ { review_id, topic, priority, prompt } ] }
+
 如果某个文件不存在或为空，对应字段返回 null。不要编造数据。
 ```
 
@@ -120,11 +124,12 @@ digraph review {
 
 ### 阶段二：汇总生成报告
 
-报告分为 8 个固定章节（见下方"报告格式"）。核心是三个决策输出：
+报告分为 9 个固定章节（见下方"报告格式"）。核心是四个决策输出：
 
 1. **就绪度评分**：5 个维度加权汇总
 2. **错题待修复清单**：按 Redo Date 排序，优先到期条目
-3. **今日必做清单**：从错题 + 覆盖缺口中推导
+3. **到期复习项**：review-queue 中到期条目
+4. **今日必做清单**：从错题 + 覆盖缺口 + 到期复习中推导
 
 ### 阶段三：输出
 
@@ -145,9 +150,34 @@ digraph review {
 | `exam_style_analysis.md` 缺失 | 出题风格分析 | 跳过该章节，从 task_board.md 提取简要风格信息 |
 | `exam-style-analysis.md` §6 无 mastery 数据 | mastery 分布章节 | 输出"暂无掌握进度数据——建议先完成一轮选择题 drill" |
 | `task_board.md` 缺失 | 一、任务进度 | 输出"暂无任务看板" |
-| Agent 并行采集不可用 | 全部章节 | 回退到主会话逐文件读取（降级模式，上下文会增大） |
+| `Agent 并行采集不可用` | 全部章节 | 回退到主会话逐文件读取（降级模式，上下文会增大） |
+| `review_queue.md` 不存在或为空 | 三-b、到期复习 | 输出"暂无到期复习项"，今日必做清单跳过复习项 |
 
 **核心原则**：宁可章节空白，不要编造数据。缺失信息会在今日必做清单中体现为待补项。
+
+### Lite / Portable Report Behavior
+
+当 MCP、ChatMem、本地数据库/索引、review-cli 或部分 Markdown 文件不可用时：
+
+1. 不把缺失文件当作失败；对应章节保留标题并写"暂无数据"或"今日尚无练习记录"。
+2. 即使输入稀疏，也必须输出"今日 3 项最小可执行清单"：
+   - 1 道限时 OJ 题，走 solve-skeleton -> 记录错因。
+   - 1 组选择题，按 `exam_config.md` + 默认高频主题出题；无交互工具时用聊天答案模式。
+   - 更新 `HANDOFF.md` 或返回 `[HANDOFF_UPDATE]`，写清下一步和阻塞。
+3. 仓库不可写时，不声称已更新进度；返回：
+
+```text
+[DAILY_PROBLEM_LOG_APPEND]
+题名 | 模式 | 解法 | 结果 | 错因/备注 | 复杂度
+
+[TASK_BOARD_UPDATE]
+今日完成 / 下次优先级 / P0-P1 调整
+
+[HANDOFF_UPDATE]
+Today's Results / Next Steps / Blockers
+```
+
+4. 长期趋势质量依赖保存下来的 Markdown 或 Full MCP Mode。Lite/Portable Mode 适合临时环境、新用户启动和故障恢复，不建议长期作为唯一工作流。
 
 ## 报告格式
 
@@ -180,6 +210,13 @@ digraph review {
 | ⚪ 未到 | ... | ... | ... | ... | MM-DD |
 
 Root Cause 分布：pattern(X) / proof(X) / python(X)
+
+### 三-b、到期复习项
+
+| 优先级 | 复习项 | 主题 | 提示 |
+|--------|--------|------|------|
+| 🔴 P0 | RQ-XXXX | ... | ... |
+| 🟡 P1 | RQ-XXXX | ... | ... |
 
 ### 四、知识点覆盖度
 
@@ -225,13 +262,21 @@ Root Cause 分布：pattern(X) / proof(X) / python(X)
 
 ### 八、今日必做清单
 
-1. [ ] **错题修复**：重做到期错题 [题名]
-2. [ ] **模式练习**：补齐 [未覆盖的 P0/P1 模式]
-3. [ ] **模板默写**：[根据 checklist 中 AC 标准未达标的项]
+1. [ ] **错题修复**：重做到期错题 [题名]；暂无数据时改为复盘 `mistake_log.md` 最近 1 条
+2. [ ] **模式练习**：补齐 [未覆盖的 P0/P1 模式]；暂无 checklist 时默认做数组/哈希/二分 1 题
+3. [ ] **模板默写**：[根据 checklist 中 AC 标准未达标的项]；暂无数据时默写 ACM 输入模板
 4. [ ] **选择题**：针对 [薄弱主题] 做专项练习
 5. [ ] **知识口述**：[根据 AI/ML 维度最低分项]
 6. [ ] **盲区修复**：重做 [blind_spot 知识点] 的变体题
 7. [ ] **易错点巩固**：[struggling 知识点] 安排明日 Redo
+
+### Lite/Portable 今日 3 项
+
+当可用数据太少时，至少输出：
+
+1. [ ] 限时完成 1 道 OJ 基础题，并把错因写入或返回 `[DAILY_PROBLEM_LOG_APPEND]`。
+2. [ ] 做 5-8 道选择题；无历史时按默认高频主题，答题后返回 `[CHOICE_ROUND_SUMMARY]`。
+3. [ ] 更新 `HANDOFF.md`；无写权限时返回 `[HANDOFF_UPDATE]`。
 ```
 
 ## 自评打分规则
@@ -296,9 +341,11 @@ else:
 | 输出内容 | 路径 | 说明 |
 |---------|------|------|
 | 自评打分 | `targets/{target}/progress/study-planning/readiness-score.md` | 已有，保持不变 |
-| 周期性复习总结 | `targets/{target}/progress/reviews/review-YYYY-MM-DD.md` | 周期性 review 时写入 |
+| 复习队列 | `targets/{target}/progress/reviews/review-queue.md` | review-cli build 命令生成，mark 命令更新 |
 | 考前速查模式 | 对话中（不写文件） | 保持轻量 |
 | 进度报告 | 对话中（不写文件） | 每次调用时即时生成 |
+
+`review-cli` 是可选增强；缺少它时直接扫描 Markdown 或输出 Lite 今日三项。趋势和间隔复习质量会降低，因此长期备考应迁移到 Local Markdown Mode 或 Full MCP Mode。
 
 ## Cross-References
 
@@ -310,5 +357,6 @@ else:
 - `targets/{target}/progress/study-planning/readiness-score.md` — 本 skill 可更新自评分
 - `targets/{target}/progress/task-board/task-board.md` — 本 skill 读取任务状态
 - `targets/{target}/mistake_log.md` — 核心错题数据源
+- `targets/{target}/progress/reviews/review-queue.md` — 到期复习项数据源
 - `targets/{target}/progress/reviews/review-YYYY-MM-DD.md` — 周期性复习总结输出
 - `targets/{target}/topic_checklist.md` — 知识点覆盖数据源

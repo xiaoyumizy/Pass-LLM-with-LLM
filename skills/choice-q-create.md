@@ -15,14 +15,25 @@ description: >
 # Choice Question Creation Skill
 
 Generate targeted multiple-choice question sets for the target exam.
-Combines web search, historical problem bank, mistake_log, and cross-session experience
-patterns from the exam-memory MCP server to create high-quality practice material.
-Outputs a self-contained markdown file ready for the `choice-q-drill` skill.
+Combines exam_config, local Markdown history, optional historical problem bank, and optional
+cross-session experience patterns from the exam-memory MCP server to create practice material.
+Outputs a self-contained markdown file when the repo is writable, or a chat-ready question set
+plus Lite append templates when persistence cannot be guaranteed.
 
-The create skill reads from two feedback sources: `mistake_log.md` (local, quick-reference)
-and `mcp__exam-memory__list_experiences` MCP (cross-session, structured by type/knowledge). Topics appearing
-in both sources get highest priority because they represent persistent weak points that
-haven't been resolved yet.
+The create skill reads from `exam_config.md` first, then local Markdown feedback such as
+`mistake_log.md` and prior round files. `mcp__exam-memory__list_experiences` is an optional
+Full MCP Mode enhancement. Topics appearing in both local and MCP sources get highest priority,
+but missing history is not a blocker.
+
+## 0. Runtime Modes
+
+| Mode | Behavior |
+|------|----------|
+| Full MCP Mode | Read Markdown + optional MCP experiences; write `roundN.md`. |
+| Local Markdown Mode | Read/write repository Markdown only; no MCP calls required. |
+| Stateless Lite Mode | If the repo cannot be written, return the full question set in chat plus `[CHOICE_ROUND_SUMMARY]` and handoff/update templates. |
+
+When degraded, the final message must state which history/retrieval capabilities were skipped and warn that Lite/Portable Mode is only for temporary environments, first-run startup, and recovery.
 
 ## 1. Exam Format Reference
 
@@ -78,10 +89,10 @@ Draw questions from these 12 domains, balanced across rounds:
 
 0. **Read mastery data** — check `targets/{target}/progress/exam-analysis/exam-style-analysis.md` §6 "知识点掌握进度" for mastery levels per topic. Also read `targets/{target}/mistake_log.md` Mastery column. This is the **canonical source** for mastery info; prefer it over re-querying exam-memory MCP.
 
-Before generating, read `targets/{target}/progress/exam-analysis/exam-style-analysis.md` §2 频率表 and §4 趋势预测 to calibrate
-the topic allocation ratio — simulated类 36%, 字符串 29%, 数论/栈 各 21% are the empirical baseline.
-Use §4.2 选择题预测 to identify which domains to overweight based on historical exam patterns.
-Then read `targets/{target}/mistake_log.md` and check:
+Before generating, try to read `targets/{target}/progress/exam-analysis/exam-style-analysis.md` §2 频率表 and §4 趋势预测 to calibrate
+the topic allocation ratio. If that file is missing, mark related fields as "暂无数据" and fall back to `exam_config.md` plus the default high-yield topics in §2; do not invent historical patterns.
+Use §4.2 选择题预测 when available to identify which domains to overweight based on historical exam patterns.
+Then read `targets/{target}/mistake_log.md` when available and check:
 1. Which topics have the most errors? → Allocate 2-3 questions there.
 2. Which errors have `Redo Date` that hasn't passed? → Include reinforcement questions.
 3. **Cross-session experience patterns** — call `mcp__exam-memory__list_experiences(type="单选题", limit=5)` and `mcp__exam-memory__list_experiences(type="多选题", limit=5)` to retrieve persistent error patterns from the exam-memory MCP server. These patterns survive across sessions and capture errors that may not yet be in mistake_log.md. If the MCP exposes mastery levels (e.g. per-knowledge mastery scores), also query them — but note that `targets/{target}/progress/exam-analysis/exam-style-analysis.md` §6 is the canonical source and should be preferred. If exam-memory does not yet expose mastery levels, use `error_count` as a proxy for `struggling` topics. Merge these with mistake_log findings — topics appearing in BOTH sources get highest priority. **MCP 不可用时跳过此步骤**。
@@ -98,7 +109,25 @@ Then read `targets/{target}/mistake_log.md` and check:
    - Phase 4 (考前冲刺): only high-frequency mistake_log topics
 5. Which `Root Cause` tags appear most (pattern/proof/python)? → Balance question types.
 
-Also check `targets/{target}/progress/choice-questions/round*.md` for previously used questions — **never duplicate**.
+Also check `targets/{target}/progress/choice-questions/round*.md` for previously used questions. If no previous rounds exist, set duplication history to "暂无数据" and only avoid duplicates within the current generated set.
+
+### 4b. 零历史 / Portable 兜底
+
+When `mistake_log.md`, prior round files, or exam analysis files are missing:
+
+1. Read `targets/{target}/exam_config.md` to get counts, scoring, time, and multi-select policy.
+2. Use this 默认高频 topic pool unless the user specifies a topic: Transformer attention/KV cache, LLaMA3 RoPE-GQA-SwiGLU-RMSNorm, LoRA/QLoRA/RLHF/DPO, RAG/Agent, GNN message passing/over-smoothing, diffusion DDPM/DDIM/CFG, linear algebra eigen/SVD/PSD, probability Bayes/distributions, calculus gradients/convexity, Python OJ hash/sort/binary search/sliding window.
+3. Label historical fields as "暂无数据" in coverage and provenance tables.
+4. Do not fabricate prior mistakes, scores, mastery levels, or source files.
+5. If write access is unavailable, return the questions directly in chat and include:
+
+```text
+[CHOICE_ROUND_SUMMARY]
+题号 | 你的答案 | 正确答案 | 得分 | 知识点 | 是否写入错题
+
+[HANDOFF_UPDATE]
+Today's Results / Next Steps / Blockers
+```
 
 ## 5. Web Search Integration
 
@@ -253,24 +282,26 @@ D. ...
    返回：{ single_choice_experiences: [{title, knowledge, error_count}],
            multi_choice_experiences: [{title, knowledge, error_count}] }
 
-如果某个文件不存在或为空，对应字段返回 null 或空数组。不要编造数据。
+如果某个文件不存在或为空，对应字段返回 null、空数组或 "暂无数据"。不要编造数据。
 ```
 
-**降级规则**：Agent 不可用时，主会话回退到逐文件读取（降级模式）。
+**降级规则**：Agent 不可用时，主会话回退到逐文件读取。MCP 不可用时跳过第 7 项。仓库不可写时不声称已保存 round 文件，改为 Stateless Lite chat output。
 
 ### 阶段二：出题
 7. **Write questions** — generate all {总题数} based on the collected data
 8. **Write answers & analysis** — full explanations with 防错 markers
-9. **Save file** — `targets/{target}/progress/choice-questions/roundN.md`
-10. **Report** — tell user the file is ready, suggest invoking `choice-q-drill`
+9. **Save file when possible** — `targets/{target}/progress/choice-questions/roundN.md`
+10. **Stateless fallback** — if saving is not possible, output the full round in chat and include `[CHOICE_ROUND_SUMMARY]`
+11. **Report** — tell user the file is ready or that Lite blocks must be saved manually, then suggest invoking `choice-q-drill`
 
 ### 阶段三：输出
 
 输出必须包含三部分：
 
-1. `targets/{target}/progress/choice-questions/roundN.md` 文件路径。
+1. `targets/{target}/progress/choice-questions/roundN.md` 文件路径；若未能写入，则说明当前为 Stateless Lite Mode。
 2. 本轮题目覆盖摘要：单选/多选题数、覆盖知识点、重点补弱主题。
 3. 下一步指令：建议用户调用 `choice-q-drill` 开始交互答题。
+4. 降级提醒：若 MCP/历史/写入不可用，说明哪些能力跳过，并提醒 Lite/Portable Mode 不建议长期作为唯一工作流。
 
 ## 8. Cross-References
 
@@ -281,5 +312,5 @@ D. ...
 - `shared/cheatsheets/llm_core_cheatsheet.md` — LLM/DL source material
 - `targets/{target}/cheatsheets/gnn_diffusion_cheatsheet.md` — GNN/diffusion source material
 - `targets/{target}/cheatsheets/math_fundamentals.md` — math source material
-- `exam-memory` MCP tools — cross-session persistent error patterns (mcp__exam-memory__list_experiences)
-- `skills/exam-assistant.md` — MCP-backed exam assistant with full experience workflow
+- `exam-memory` MCP tools — optional cross-session persistent error patterns (mcp__exam-memory__list_experiences)
+- `skills/exam-assistant.md` — MCP-aware exam assistant with local Markdown / Lite fallback

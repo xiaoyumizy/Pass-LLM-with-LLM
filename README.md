@@ -1,71 +1,33 @@
 # pass-llm-with-llm
 
-> Use LLMs to pass LLM and algorithm exams — an education-focused Claude Code Skills + MCP exam-prep harness
+> LLM-powered exam-prep harness for AI and algorithm written exams.
 
-[中文文档](README_CN.md) | Keywords: `education`, `exam-prep`, `llm`, `algorithm`, `claude-code`, `mcp`, `ai-agents`, `spaced-repetition`, `python-oj`
+![Education](https://img.shields.io/badge/Education-Exam%20Prep-2f80ed?style=flat)
+![LLM](https://img.shields.io/badge/LLM-powered-7c3aed?style=flat)
+![Interactive Quiz](https://img.shields.io/badge/Interactive-Quiz-16a34a?style=flat)
+![Claude Code](https://img.shields.io/badge/Claude%20Code-Skills-f97316?style=flat)
+![MCP](https://img.shields.io/badge/MCP-optional-555?style=flat)
+![Local First](https://img.shields.io/badge/Local--first-Markdown-0f766e?style=flat)
 
-## Why It Stands Out
+[中文文档](README_CN.md)
 
-- **Education-first workflow**: turns practice into a repeatable study loop, not a pile of notes.
-- **Agent-ready structure**: predictable `skills/`, `targets/`, `shared/`, and `progress/` folders make it easy for coding agents and MCP tools to inspect.
-- **Closed-loop exam prep**: mistakes feed future annotations, choice-question drills, readiness reports, and planned review scheduling.
-- **Local by default**: Markdown files remain readable and versionable; MCP adds persistence and retrieval without becoming a hard dependency.
+## Why Try It
 
-## What Is This
+- **Exam practice as a loop**: algorithm practice, choice-question drills, mistake logging, and review planning stay connected.
+- **Interactive choice-question drill**: with the Claude Code VS Code extension, `choice-q-drill` can present one question at a time, score answers immediately, and feed mistakes back into future practice.
+- **Algorithm Skill Pipeline**: `solve-skeleton` -> `solve-analyze` -> `algo-annotation` turns an OJ problem into a tested, diagnosed, annotated solution.
+- **Local-first by default**: Markdown files remain readable and versionable; the bundled `exam-memory` MCP server is optional enhancement, not a hard dependency.
 
-An **execution harness**, not a knowledge base. It chains Claude Code's Skill mechanism into an automated closed loop: algorithm skeleton generation → solution diagnosis → annotation → mistake tracking → targeted question drilling → review planning.
-
-Built for AI/算法岗位笔试 preparation, but the core Skill Pipeline is exam-agnostic and can be adapted to any written exam target.
-
-## Core Features
-
-- **Skill Pipeline**: solve-skeleton → solve-analyze → algo-annotation — full chain from problem to annotated solution
-- **Mistake Feedback Loop**: WA/TLE errors auto-recorded, next problem auto-annotated with `# [防错]` markers
-- **Choice Question Engine**: targeted generation → interactive drill → instant scoring → weakness analysis
-- **MCP Experience Persistence** (optional): cross-session error pattern storage + user profiling via custom MCP Server
-- **Progress and Review Tracking**: readiness score, coverage gaps, daily must-do list, and a planned spaced-review queue
-
-## Repository Topics
-
-Suggested GitHub topics for discoverability:
-
-```text
-education, exam-prep, llm, algorithm, python, claude-code, mcp, ai-agents,
-agent-workflow, spaced-repetition, study-tools, interview-prep, oj
-```
-
-## Agent and MCP Retrieval Hints
-
-If you are an agent, MCP client, or local retrieval tool, start here:
-
-| Need | Entry Point |
-|------|-------------|
-| Session bootstrap | `START_HERE.md` |
-| Project rules and skill routing | `AGENTS.md` |
-| Current handoff and target setup | `HANDOFF.md` |
-| Skills callable by an agent | `skills/` |
-| Target-specific exam material | `targets/{target}/` |
-| Shared MCP server and retrieval helpers | `shared/exam_memory/` |
-| Development roadmap | `docs/dev-roadmap.md` |
-| Review mechanism plan | `docs/plans/2026-06-17-review-mechanism-implementation-plan.md` |
+This is an **execution harness**, not a generic knowledge base or a pile of solutions. It is built to help a learner keep moving through the daily loop: intake -> practice -> record -> review -> handoff.
 
 ## Quick Start
 
 ### Prerequisites
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI or VS Code extension
-- Python 3.10+ (only needed for MCP Server)
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI or VS Code extension.
+- Python 3.10+ only if you want to enable the optional `exam-memory` MCP server.
 
-### Supported Environments
-
-| Component | Details |
-|-----------|---------|
-| IDE | VS Code (**recommended** — interactive quiz mode requires VS Code extension) or terminal |
-| Claude Code | VS Code extension (**recommended**) or CLI (`npm install -g @anthropic-ai/claude-code`) |
-| Model Provider | Any provider supported by Claude Code (Claude API, third-party, local) |
-| Python | 3.10+ (only for exam-memory MCP Server) |
-
-This project was developed using the **Claude Code VS Code extension** with third-party model providers. The Skill Pipeline is model-agnostic — any capable model works.
+The VS Code extension is recommended for the best interactive quiz experience. If interactive quiz tools are unavailable, `choice-q-drill` can still score compact chat answers such as `1A 2BD 3C` and return update blocks. The core Markdown and Skill workflow can be used without enabling MCP.
 
 ### Install
 
@@ -74,221 +36,252 @@ git clone https://github.com/Tenstu/pass-llm-with-llm.git
 cd pass-llm-with-llm
 ```
 
-### Configure Your Target Exam
+### First Run
 
-Edit `HANDOFF.md` with your exam name, date, and daily study hours. Update `targets/{target}/sources/` with your exam's historical patterns.
+1. Open the repository in Claude Code.
+2. Say `init` or `初始化` to run the onboarding guide.
+3. Read [START_HERE.md](START_HERE.md) for the session bootstrap order.
+4. Configure your target in [HANDOFF.md](HANDOFF.md) if needed.
 
-### Use
+### Zero-Dependency Path
 
-1. Open the project in Claude Code
-2. **First time?** Say "init" or "初始化" to launch the onboarding guide — it collects your exam target, date, and scope
-3. Daily use: read `START_HERE.md` for session bootstrap
-4. For algorithm problems: `Skill(skill="solve-skeleton")`
-5. For diagnosis: `Skill(skill="solve-analyze")`
-6. For choice questions: `Skill(skill="choice-q-create")` → `Skill(skill="choice-q-drill")`
+For a temporary or first-run setup, you can use the harness with only Markdown files:
 
-### Startup Order
+1. Fill [HANDOFF.md](HANDOFF.md) with target, exam date, and daily time.
+2. Create today's `shared/daily/YYYY-MM-DD.md`, or ask the agent to return a `DAILY_PROBLEM_LOG_APPEND` block.
+3. Use `targets/{target}/exam_config.md` for question counts and scoring.
+4. Record mistakes in `targets/{target}/mistake_log.md`, or save the returned `MISTAKE_LOG_APPEND` / `CHOICE_ROUND_SUMMARY` / `HANDOFF_UPDATE` blocks.
 
+Lite/Portable Mode is for temporary environments, first-run startup, and recovery. It is not suitable as the only long-term workflow because cross-session retrieval, automatic error-count merging, and profile updates are unavailable. For sustained prep, move to Local Markdown Mode or enable Full MCP Mode.
+
+### Daily Use
+
+```text
+Algorithm problem:
+  Skill(skill="solve-skeleton")
+  -> fill solve()
+  -> Skill(skill="solve-analyze") when WA/TLE or unsure
+  -> Skill(skill="algo-annotation")
+
+Choice-question practice:
+  Skill(skill="choice-q-create")
+  -> Skill(skill="choice-q-drill")
+  -> mistakes feed the next drill
+
+Progress check:
+  Skill(skill="review-tracker")
 ```
-git clone → cd pass-llm-with-llm
-  │
-  ├── pip install mcp               # optional: for exam-memory MCP server
-  │
-  ├── edit .mcp.json                # register exam-memory, pointing to shared/exam_memory/server.py
-  │
-  ├── open in Claude Code
-  │     │
-  │     ├── first time → say "init" → init-guide Skill walks you through setup
-  │     │
-  │     └── daily use → read START_HERE.md → Skill Pipeline
-  │
-  └── (optional) configure external MCPs: ChatMem, mempalace, onefind
-        these are environment-level, not project-bundled
-        configure these in your Claude Code environment if needed
+
+### Runtime Modes
+
+| Mode | Dependencies | Best For |
+|------|--------------|----------|
+| Full MCP Mode | Repository Markdown + optional `exam-memory` MCP | Long-running prep with cross-session retrieval and profile updates |
+| Local Markdown Mode | Repository files only | Default low-friction workflow |
+| Stateless Lite Mode | Current chat + returned append blocks | Temporary machines, new-user demos, recovery when files/tools are unavailable |
+
+## Core Loop
+
+```mermaid
+flowchart LR
+  A["Problem or topic intake"] --> B["solve-skeleton"]
+  B --> C["solve-analyze"]
+  C --> D["algo-annotation"]
+  D --> E["mistake_log.md"]
+  E --> F["choice-q-create"]
+  F --> G["choice-q-drill"]
+  G --> E
+  E --> H["review-tracker"]
+  H --> I["HANDOFF.md"]
 ```
 
-### MCP Dependencies
+The important part is the feedback path: mistakes recorded today become tomorrow's hints, drills, and review priorities.
 
-This project **bundles one MCP server** (`exam-memory`) and **references external MCPs** that are not included:
+## Core Features
 
-| MCP Server | Bundled? | Purpose | Setup |
-|------------|:---:|---------|-------|
-| `exam-memory` | Yes | Cross-session experience persistence + user profiling | `pip install mcp` + edit `.mcp.json` |
-| ChatMem | No | Cross-session conversation memory | [External install](https://github.com/Rimagination/ChatMem/releases) |
-| mempalace | No | Structured knowledge storage | [External install](https://github.com/MemPalace/mempalace) |
-| onefind | No | Local knowledge base retrieval | [External install](https://github.com/iawnfoanaowt/OneFind) |
+| Feature | What It Does |
+|---------|--------------|
+| Algorithm Skill Pipeline | Selects ACM/OJ skeletons, diagnoses solutions, and adds Chinese `# [防错]` annotations. |
+| Interactive Choice Drill | Generates targeted choice questions, presents them interactively in Claude Code VS Code extension, scores answers, and records weak topics. |
+| Local Mistake Loop | Keeps WA/TLE causes and choice-question mistakes in target-specific Markdown logs. |
+| Optional exam-memory MCP | Adds cross-session experience persistence, error counting, and user profile retrieval. |
+| Review Tracker | Aggregates progress, weak topics, readiness trends, and today's must-do list. |
+| Target-Aware Layout | Stores reusable material under `shared/` and exam-specific material under `targets/{target}/`. |
 
-All skills degrade gracefully to local-only mode when MCP is unavailable. To enable the bundled server, register `.mcp.json` with a stdio command that runs `shared/exam_memory/server.py`.
+## Repository Topics
+
+Suggested GitHub topics for discoverability:
+
+```text
+education, llm, exam-prep, algorithm, interactive-quiz, claude-code,
+vscode-extension, mcp, ai-agents, python-oj, study-tools,
+spaced-repetition, local-first, knowledge-retrieval
+```
+
+## Agent and MCP Entry Points
+
+| Need | Entry Point |
+|------|-------------|
+| Session bootstrap | [START_HERE.md](START_HERE.md) |
+| Project rules and skill routing | [AGENTS.md](AGENTS.md) |
+| Current handoff and target setup | [HANDOFF.md](HANDOFF.md) |
+| Skill definitions | `skills/` |
+| Target-specific exam material | `targets/{target}/` |
+| Shared MCP server and retrieval helpers | `shared/exam_memory/` |
+| Contribution rules | [CONTRIBUTING.md](CONTRIBUTING.md) |
+
+## Optional Integrations
+
+The harness works in local Markdown mode first. These integrations add memory or retrieval when you want more continuity.
+
+| Tool | Role | Bundled? |
+|------|------|:---:|
+| `exam-memory` MCP | Cross-session mistake and experience persistence, user profile retrieval, optional semantic search support. | Yes |
+| ChatMem | Conversation-level recall for handoffs, continuation, and project history. | No |
+| MemPalace | Long-term structured knowledge storage and knowledge graph workflows. | No |
+| [OneFind](https://github.com/iawnfoanaowt/OneFind) | External local knowledge retrieval for existing Obsidian notes, Zotero libraries, or folders. | No |
+
+`exam-memory` is the write-through exam-prep memory layer in this project. OneFind is best treated as a read-oriented external retrieval layer for knowledge you already keep elsewhere. They are complementary rather than substitutes.
+
+To enable the bundled MCP server, install the minimal Python dependencies and register `.mcp.json` with a stdio command that runs `shared/exam_memory/server.py`. Copy `.mcp.example.json` to `.mcp.json` and adjust the Python path. Optionally copy `.env.example` to `.env` for centralized key management. If MCP is unavailable, the Skills fall back to local Markdown files; if files cannot be written, they return append blocks and warn that Lite/Portable Mode should remain temporary.
+
+### Optional Capability Setup
+
+The base harness does not need an online model, embedding model, GPU, or MCP server. These are optional enhancements:
+
+| Capability | Install | Configure |
+|------------|---------|-----------|
+| `exam-memory` MCP | `cd shared/exam_memory` then `pip install .` | copy `.mcp.example.json` to your local `.mcp.json` and adjust paths if needed |
+| Semantic retrieval with local embeddings | `pip install ".[embed]"` | default local model is `BAAI/bge-m3`; first use downloads it through Hugging Face cache |
+| Question generation LLM | `pip install ".[generate]"` | set `EXAM_MEMORY_LLM_MODEL`; there is no default online model |
+
+`BAAI/bge-m3` currently runs CPU-only in this project. It does not require CUDA, a GPU, or NVIDIA drivers. If `sentence-transformers` is missing or the model cannot be downloaded, CRUD, manual question entry, Markdown logs, and lexical search still work; only semantic retrieval is unavailable until dependencies and cache are ready.
+
+After enabling embeddings, rebuild local indexes when needed:
+
+```bash
+cd shared/exam_memory
+python -m exam_memory.rebuild_index --force
+```
+
+For offline use, cache the model once on a machine with network access before going offline. Future provider configuration will also support pointing `EXAM_MEMORY_EMBEDDING_MODEL` at a local model directory.
+
+Question generation is separate from embeddings. `QuestionBank` reads only `EXAM_MEMORY_LLM_MODEL` for chat completion, and embedding settings are never used to generate questions.
+
+LiteLLM examples:
+
+```bash
+# DeepSeek
+export EXAM_MEMORY_LLM_MODEL=deepseek/deepseek-chat
+export DEEPSEEK_API_KEY=...
+
+# Qwen through DashScope
+export EXAM_MEMORY_LLM_MODEL=dashscope/qwen-plus
+export DASHSCOPE_API_KEY=...
+
+# OpenAI-compatible local or hosted endpoint
+export EXAM_MEMORY_LLM_MODEL=openai/local-qwen
+export OPENAI_API_BASE=http://localhost:8000/v1
+export OPENAI_API_KEY=local-placeholder
+```
+
+### Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---------|--------------|-----|
+| `LLM 不可用：未配置 EXAM_MEMORY_LLM_MODEL` | no question-generation model configured | set `EXAM_MEMORY_LLM_MODEL`, or use manual/local question workflows |
+| `LLM 不可用：litellm 未安装` | generation extra missing | run `pip install ".[generate]"` in `shared/exam_memory` |
+| embedding import/download failure | `sentence-transformers` missing, network unavailable, or Hugging Face cache empty | run `pip install ".[embed]"`, cache the model, or continue with lexical/local Markdown mode |
+| stale or incompatible vector index | local `vectorstore/` was built with a different embedding setup | rebuild with `python -m exam_memory.rebuild_index --force` |
+| API key error | provider key missing or not exported in the active shell | set the provider-specific key in your local `.env` or shell environment |
 
 ## Skill Reference
 
 | Skill | Purpose | MCP Required |
 |-------|---------|:---:|
-| init-guide | First-run onboarding: exam target, date, scope, user profiling | Optional |
-| solve-skeleton | Algorithm problem skeleton generation (8 templates + 6 patterns) | No |
-| solve-analyze | Diagnosis: code comparison + root cause tagging | Optional |
-| algo-annotation | Chinese comments + `# [防错]` markers | No |
-| choice-q-create | Targeted choice question generation | Optional |
-| choice-q-drill | Interactive quiz + instant scoring | Optional |
-| exam-assistant | Exam assistant with experience retrieval + user profiling | Yes |
-| review-tracker | Progress aggregation + readiness trends | No |
-
-All skills with "Optional" MCP degrade gracefully to local-only mode when MCP is unavailable.
-
-### ChatMem Enhancement (Recommended)
-
-[ChatMem](https://github.com/Rimagination/ChatMem/releases) provides cross-session conversation memory. While not required, it significantly improves these skills:
-
-| Skill | With ChatMem |
-|-------|-------------|
-| review-tracker | Stores historical progress reports; enables cross-session trend comparison |
-| exam-assistant | Recalls prior quiz sessions and error discussions for continuity |
-| init-guide | Remembers previous onboarding attempts; avoids re-collecting known info |
-| solve-analyze | Links diagnosis history across sessions for pattern recognition |
-
-Install ChatMem and register it in your Claude Code global config.
-
-### MemPalace Enhancement (Optional)
-
-[MemPalace](https://github.com/MemPalace/mempalace) provides structured knowledge storage with cross-wing knowledge graphs. Best suited for long-term knowledge management beyond a single exam cycle:
-
-| Use Case | How It Helps |
-|----------|-------------|
-| Knowledge graph | Map prerequisite relationships (e.g., DP ← knapsack, binary search ← sorted array) for targeted review |
-| Agent diary | Record learning observations per session; build a searchable history of "what I learned" |
-| Cross-project knowledge | Link exam prep notes with project work, interview prep, or research notes |
-
-Best paired with review-tracker (knowledge graph for coverage gaps) and exam-assistant (structured retrieval of prior insights). Not directly called by any bundled skill — use MemPalace tools manually via Claude Code.
-
-### OneFind Enhancement (Optional)
-
-[OneFind](https://github.com/iawnfoanaowt/OneFind) retrieves content from your local knowledge base (Obsidian vaults, Zotero libraries, folders). Useful if you already maintain study notes outside this project:
-
-| Use Case | How It Helps |
-|----------|-------------|
-| Obsidian notes | Search your existing ML/algorithm notes for related concepts when practicing |
-| Zotero library | Retrieve reference papers for Transformer, GNN, Diffusion topics in `shared/cheatsheets/` or `targets/{target}/cheatsheets/` |
-| Hybrid search | Combine lexical + semantic search across all local sources |
-
-Best paired with choice-q-create (search notes for question material), exam-assistant (retrieve references during explanation), and review-tracker (check if your notes cover the required topics). Not directly called by any bundled skill — use OneFind tools manually via Claude Code.
-
-#### OneFind + exam-memory: Complementary Search Layers
-
-OneFind's **folder source** can index `shared/exam_memory/experiences/` for semantic search. However, OneFind is designed as a **read-only retrieval** layer — it cannot replace exam-memory's write-through pipeline (save experience → vectorize → store atomically). The recommended setup:
-
-| Layer | Role | Write | Read |
-|-------|------|:-----:|:----:|
-| `exam-memory` MCP | Experience CRUD + error counting + user profiling | Yes (save, update) | Yes (list, filter by type) |
-| OneFind folder source | Semantic search overlay on experience files | No (index refresh only) | Yes (semantic + keyword) |
-
-**Setup**: Configure OneFind's `folder_library` to point at `shared/exam_memory/experiences/`, then use `onefind_search` with `target="folder"` for semantic retrieval of past experiences. After saving new experiences via MCP, trigger `onefind_index_refresh` to pick up changes.
-
-## Roadmap
-
-### V1 (Current) — Stable
-
-- Skill Pipeline: solve-skeleton / solve-analyze / algo-annotation
-- Choice question engine: create / drill / scoring
-- exam-memory MCP V1: local file-based experience CRUD + user profiling
-- Progress tracking and mistake feedback loop
-
-### V2 — RAG + Semantic Retrieval
-
-Upgrade `exam-memory` from keyword matching to semantic search:
-
-| Phase | Feature | Dependencies |
-|-------|---------|--------------|
-| 1 | Experience auto-vectorization → numpy store | `sentence-transformers` (bge-m3) |
-| 2 | `list_experiences` supports semantic retrieval | Phase 1 |
-| 3 | LLM auto-infers user profile | LLM API |
-| 4 | Knowledge graph for prerequisite recommendations | Phase 1 |
-
-### V2.5 — Review Scheduling
-
-Bring spaced review into the active development path:
-
-- File-based review queue under `targets/{target}/progress/reviews/`
-- SM-2 inspired scheduling for mistakes, weak topics, and choice-question errors
-- Optional MCP tools for `list_due_reviews` and `mark_review_result`
-- Planned in [Review Mechanism Implementation Plan](docs/plans/2026-06-17-review-mechanism-implementation-plan.md)
-
-### V3 — Long-term Directions
-
-- **Multimodal**: screenshot OCR → auto problem-type detection + experience retrieval
-- **Cross-device sync**: Git or WebDAV for experience files
-- **Analytics dashboard**: strength/weakness heatmap, error trends, review plan
-
-### Open Source Improvements
-
-- GitHub issue & PR templates (`.github/`)
-- `CHANGELOG.md`
+| `init-guide` | First-run onboarding: exam target, date, scope, user profiling. | Optional |
+| `solve-skeleton` | Algorithm problem skeleton generation with ACM/OJ input patterns. | No |
+| `solve-analyze` | Solution diagnosis, standard-solution comparison, root-cause tagging. | Optional |
+| `algo-annotation` | Chinese comments, `# [防错]` markers, invariant summary. | No |
+| `choice-q-create` | Targeted choice-question generation from exam config, weak topics, and sources. | Optional |
+| `choice-q-drill` | Interactive quiz, immediate scoring, mistake feedback. | Optional |
+| `exam-assistant` | Exam assistant with experience retrieval and profile awareness. | Optional |
+| `review-tracker` | Progress aggregation, readiness trend, and daily action list. | No |
 
 ## Directory Structure
 
-```
+```text
 pass-llm-with-llm/
-  AGENTS.md                    # Project rules, Component Map, Skill Pipeline
-  START_HERE.md                # Session bootstrap + Skill invocation guide
-  HANDOFF.md                   # Session handoff template
-  README.md                    # This file (English)
+  AGENTS.md                    # Project rules, component map, skill routing
+  START_HERE.md                # Session bootstrap guide
+  HANDOFF.md                   # Session handoff and target setup
+  README.md                    # English documentation
   README_CN.md                 # Chinese documentation
 
   skills/                      # Claude Code Skill definitions
-    init-guide.md              # First-run onboarding (exam target, date, scope)
     solve-skeleton/            # Algorithm skeleton templates
-    solve-analyze/             # Solution diagnosis engine
-    algo-annotation.md         # Code annotation with mistake markers
-    choice-q-create.md         # Choice question generator
-    choice-q-drill.md          # Interactive quiz mode
-    exam-assistant.md          # MCP-backed exam assistant
+    solve-analyze/             # Solution diagnosis workflow
+    algo-annotation.md         # Annotated solution output
+    choice-q-create.md         # Choice-question generation
+    choice-q-drill.md          # Interactive drill workflow
+    exam-assistant.md          # MCP-aware exam assistant
     review-tracker.md          # Progress aggregation
 
   targets/                     # Target-specific exam content
     ai-lab/
-      exam_config.md           # Exam format and scoring parameters
-      cheatsheets/             # Target-specific AI/ML quick-reference notes
-      daily/                   # Target-specific daily plans
-      progress/                # Choice rounds, study planning, exam analysis, task board
-      prompts/                 # Target-specific prompt templates
-      sources/                 # Historical patterns and target-specific references
     pdd-algo/
-      exam_config.md           # PDD algorithm exam configuration
-      python_oj_template.py    # Utility function library
-      solutions_batch.py       # Exam problem solution collection
-      practice/                # Practice problems by topic
-      solutions/               # Individual solution write-ups
-      mistake_log.md           # WA/TLE error patterns
-      topic_checklist.md       # Topic coverage tracking
-      progress/                # Target-specific progress tracking
 
-  shared/                      # Cross-target shared content
-    cheatsheets/               # Generic LLM/ML/project quick-reference notes
-    daily/                     # Shared daily plans (YYYY-MM-DD.md)
-    exam_memory/               # Custom MCP server and experience store
-      server.py                # MCP tools for experience persistence
-      experiences/             # Experience files (YAML frontmatter + Markdown)
-      user_profile.json        # User strengths/weaknesses/preferences
-    progress/                  # Shared progress/task-board files
-    prompts/                   # Generic prompt templates
-
-  algorithms/                  # Legacy stub; active OJ assets live under targets/
-  exam_memory/                 # Legacy stub; active MCP code lives under shared/exam_memory/
-  progress/                    # Legacy stub; active progress lives under shared/ or targets/
-  prompts/                     # Prompt templates
+  shared/                      # Cross-target material
+    cheatsheets/
+    daily/
+    exam_memory/               # Bundled MCP server and experience store
+    progress/
+    prompts/
 ```
 
 ## Adapting to Other Exams
 
-The framework defaults to the configured target in `HANDOFF.md` and is designed to be reconfigured:
+1. Create or copy a target under `targets/{target}/`.
+2. Update `targets/{target}/exam_config.md` with question counts, scoring, and timing.
+3. Put exam-specific patterns under `targets/{target}/sources/`.
+4. Put target-specific notes under `targets/{target}/cheatsheets/`; keep reusable notes under `shared/cheatsheets/`.
+5. Update [HANDOFF.md](HANDOFF.md) so future sessions know the active target.
 
-1. Add or replace files under `targets/{target}/sources/` with your target exam's pattern analysis
-2. Update `targets/{target}/exam_config.md` with question counts, scoring, and timing
-3. Put target-specific notes under `targets/{target}/cheatsheets/`; keep reusable notes under `shared/cheatsheets/`
-4. Adjust `AGENTS.md` Exam Format table
+## Roadmap
+
+### Current
+
+- Algorithm Skill Pipeline for ACM/OJ practice.
+- Interactive choice-question drill with the Claude Code VS Code extension.
+- Local Markdown mistake logs and progress tracking.
+- Optional `exam-memory` MCP persistence.
+
+### Next
+
+- Stronger review scheduling from mistakes and weak topics.
+- Better question-bank generation and retrieval.
+- More reusable target exam templates.
+
+### Later
+
+- Multimodal problem intake from screenshots.
+- Cross-device sync for experience files.
+- Analytics dashboard for strengths, weak topics, and review plans.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome when they improve the exam-prep loop. Good first areas include:
+
+- new target templates under `targets/{target}/`;
+- stronger Skill prompts or references under `skills/`;
+- reusable cheatsheets under `shared/cheatsheets/`;
+- documentation, examples, and lightweight test coverage.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for path rules and PR expectations.
+
+## Acknowledgements
+
+This project is inspired in part by [OneFind](https://github.com/iawnfoanaowt/OneFind), especially its local-first retrieval orientation and the idea that agent-facing tools should make personal knowledge easier to search and reuse. OneFind is an external project and optional integration; this repository does not redistribute OneFind code or present itself as an official OneFind extension.
 
 ## License
 

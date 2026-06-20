@@ -9,11 +9,11 @@ Motivation or issue being addressed.
 ## Scope / 影响范围
 
 - [ ] Skill definition (`skills/`)
-- [ ] MCP Server (`exam_memory/`)
-- [ ] Algorithm code (`algorithms/`)
-- [ ] Cheatsheet / quick notes (`llm/`)
+- [ ] MCP Server (`shared/exam_memory/`)
+- [ ] Target-specific content (`targets/{target}/`)
+- [ ] Shared cheatsheet / quick notes (`shared/cheatsheets/`)
 - [ ] Documentation / README
-- [ ] Progress tracking (`progress/`)
+- [ ] Public examples or templates (no personal progress logs)
 - [ ] GitHub templates / CI config
 
 ## Testing Evidence / 测试证据
@@ -38,7 +38,7 @@ Details:
 - [ ] This PR changes an existing Skill's trigger behavior
 - [ ] This PR modifies MCP tool signatures or output format
 - [ ] This PR renames or moves files referenced by other components
-- [ ] This PR requires re-running `exam_memory` setup
+- [ ] This PR requires re-running `shared/exam_memory` setup
 
 If breaking, describe migration steps:
 
@@ -49,7 +49,8 @@ If breaking, describe migration steps:
 ## Checklist
 
 - [ ] Algorithm solution went through solve-skeleton -> algo-annotation full flow
-- [ ] WA/TLE errors recorded in `algorithms/mistake_log.md`
+- [ ] WA/TLE errors recorded locally if applicable, without including personal logs in this PR
 - [ ] New Skill has complete frontmatter (name, description)
 - [ ] No unnecessary third-party dependencies introduced
-- [ ] No personal data from `exam_memory/` included (that directory is in `.gitignore`)
+- [ ] No personal experience data from `shared/exam_memory/experiences/` included
+- [ ] External project inspiration or copied material is linked and license-compatible

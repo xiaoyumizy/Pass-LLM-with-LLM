@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "exam-memory": {
+      "command": "python",
+      "args": [
+        "shared/exam_memory/server.py"
+      ],
+      "cwd": ".",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "",
+        "HF_HUB_ENABLE_HF_TRANSFER": "0"
+      }
+    }
+  }
+}

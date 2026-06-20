@@ -1,71 +1,33 @@
 # pass-llm-with-llm
 
-> 用 LLM 备考 LLM 与算法笔试 — 面向教育与备考场景的 Claude Code Skills + MCP 执行框架
+> 面向 AI/算法笔试的 LLM-powered exam-prep harness。
 
-[English](README.md) | 关键词：`education`、`exam-prep`、`llm`、`algorithm`、`claude-code`、`mcp`、`ai-agents`、`spaced-repetition`、`python-oj`
+![Education](https://img.shields.io/badge/Education-Exam%20Prep-2f80ed?style=flat)
+![LLM](https://img.shields.io/badge/LLM-powered-7c3aed?style=flat)
+![Interactive Quiz](https://img.shields.io/badge/Interactive-Quiz-16a34a?style=flat)
+![Claude Code](https://img.shields.io/badge/Claude%20Code-Skills-f97316?style=flat)
+![MCP](https://img.shields.io/badge/MCP-optional-555?style=flat)
+![Local First](https://img.shields.io/badge/Local--first-Markdown-0f766e?style=flat)
 
-## 项目亮点
+[English](README.md)
 
-- **教育优先的学习闭环**：把刷题、诊断、错题、复盘组织成可重复执行的备考流程，而不是散乱笔记。
-- **Agent 友好的目录结构**：`skills/`、`targets/`、`shared/`、`progress/` 分区稳定，方便 coding agent 和 MCP 工具检索。
-- **闭环式笔试准备**：错题会回流到后续注释、选择题训练、就绪度报告，以及规划中的复习调度。
-- **默认本地可读**：Markdown 文件可人工阅读、可 Git 版本管理；MCP 只是增强持久化与检索，不是硬依赖。
+## 为什么值得试
 
-## 这是什么
+- **把备考变成闭环**：算法题、选择题、错题记录、复盘计划串在一起，不再散落成一堆笔记。
+- **交互式选择题训练**：配合 Claude Code VS Code 扩展，`choice-q-drill` 可以逐题呈现、即时评分，并把错题回流到后续练习。
+- **算法 Skill Pipeline**：`solve-skeleton` -> `solve-analyze` -> `algo-annotation`，从 OJ 题目到诊断、注释、避坑标记形成完整链路。
+- **默认本地优先**：Markdown 文件可读、可 Git 管理；项目自带的 `exam-memory` MCP server 是增强项，不是硬依赖。
 
-一个**执行型备考框架**，不是知识库。它通过 Claude Code 的 Skill 机制，将算法骨架生成、解题诊断、代码标注、错题回流、选择题训练、复习规划串联成自动化闭环。
-
-默认面向 AI/算法岗位笔试，核心 Skill Pipeline 与考试无关，可适配任意笔试目标。
-
-## 核心特性
-
-- **Skill Pipeline**：solve-skeleton → solve-analyze → algo-annotation，从题目到标注解法的完整链路
-- **错题反馈闭环**：WA/TLE 自动记录，下次刷题自动标注 `# [防错]` 标记
-- **选择题引擎**：定向出题 → 交互答题 → 即时评分 → 弱点分析
-- **MCP 经验沉淀**（可选）：自定义 MCP Server 实现跨会话错误模式持久化 + 用户画像
-- **进度与复习追踪**：就绪度评分、知识点覆盖缺口、每日必做清单，以及规划中的间隔复习队列
-
-## 仓库 Topics 建议
-
-建议在 GitHub 仓库设置这些 topics，提升检索与推荐命中：
-
-```text
-education, exam-prep, llm, algorithm, python, claude-code, mcp, ai-agents,
-agent-workflow, spaced-repetition, study-tools, interview-prep, oj
-```
-
-## Agent / MCP 检索入口
-
-如果你是 agent、MCP client 或本地检索工具，优先读取：
-
-| 需求 | 入口 |
-|------|------|
-| session 启动 | `START_HERE.md` |
-| 项目规则与 skill 路由 | `AGENTS.md` |
-| 当前交接与目标配置 | `HANDOFF.md` |
-| agent 可调用技能 | `skills/` |
-| 目标考试专属材料 | `targets/{target}/` |
-| 共享 MCP server 与检索辅助 | `shared/exam_memory/` |
-| 开发路线图 | `docs/dev-roadmap.md` |
-| 复习机制实现规划 | `docs/plans/2026-06-17-review-mechanism-implementation-plan.md` |
+这是一个**备考执行 harness**，不是普通题解仓库，也不是泛知识库。它的目标是让学习者每天稳定走完：输入目标 -> 刷题练习 -> 记录错误 -> 复盘改进 -> 交接下一轮。
 
 ## 快速开始
 
 ### 前置条件
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI 或 VS Code 扩展
-- Python 3.10+（仅 MCP Server 需要）
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI 或 VS Code 扩展。
+- Python 3.10+ 仅在启用可选 `exam-memory` MCP server 时需要。
 
-### 环境支持
-
-| 组件 | 说明 |
-|------|------|
-| IDE | VS Code（**推荐** — 交互答题模式需要 VS Code 扩展）或终端 |
-| Claude Code | VS Code 扩展（**推荐**）或 CLI（`npm install -g @anthropic-ai/claude-code`） |
-| Model Provider | 支持 Claude Code 接入的任意 provider（Claude API、第三方、本地模型） |
-| Python | 3.10+（仅 exam-memory MCP Server 需要） |
-
-本项目基于 **Claude Code VS Code 扩展**开发，使用第三方 model provider。Skill Pipeline 与底层模型无关，任意可用模型均可运行。
+推荐使用 VS Code 扩展获得最佳交互答题体验。如果交互式 quiz 工具不可用，`choice-q-drill` 仍可评分聊天答案串，例如 `1A 2BD 3C`，并返回需要落盘的 update blocks。核心 Markdown 与 Skill 流程不依赖 MCP。
 
 ### 安装
 
@@ -74,221 +36,252 @@ git clone https://github.com/Tenstu/pass-llm-with-llm.git
 cd pass-llm-with-llm
 ```
 
-### 配置目标考试
+### 首次使用
 
-编辑 `HANDOFF.md`，填写你的目标考试名称、日期和每日可投入时间。在 `targets/{target}/sources/` 下补充目标考试的历史题型分析。
+1. 在 Claude Code 中打开仓库。
+2. 说 `init` 或 `初始化` 启动配置导引。
+3. 阅读 [START_HERE.md](START_HERE.md) 了解 session 启动顺序。
+4. 如有需要，更新 [HANDOFF.md](HANDOFF.md) 中的目标考试与每日投入时间。
 
-### 使用
+### 零依赖路径
 
-1. 在 Claude Code 中打开项目目录
-2. **首次使用？** 说 "init" 或 "初始化" 启动导引流程 — 收集备考目标、考试范围、目标日期
-3. 日常使用：阅读 `START_HERE.md` 了解 session 启动流程
-4. 遇到算法题：`Skill(skill="solve-skeleton")`
-5. 需要诊断：`Skill(skill="solve-analyze")`
-6. 练习选择题：`Skill(skill="choice-q-create")` → `Skill(skill="choice-q-drill")`
+临时环境或首次试用时，只用 Markdown 也能走通最小闭环：
 
-### 启动顺序
+1. 在 [HANDOFF.md](HANDOFF.md) 填写目标、考试日期和每日投入时间。
+2. 创建今天的 `shared/daily/YYYY-MM-DD.md`；不能写文件时，让 agent 返回 `DAILY_PROBLEM_LOG_APPEND`。
+3. 用 `targets/{target}/exam_config.md` 确定题量、分值和时间。
+4. 把错题写入 `targets/{target}/mistake_log.md`，或保存返回的 `MISTAKE_LOG_APPEND` / `CHOICE_ROUND_SUMMARY` / `HANDOFF_UPDATE`。
 
+Lite/Portable Mode 适合临时环境、新用户启动和故障恢复，不建议长期作为唯一工作流；它缺少跨会话语义检索、错误频率自动合并和用户画像更新。长期备考至少使用 Local Markdown Mode，最好启用 Full MCP Mode。
+
+### 日常使用
+
+```text
+算法题：
+  Skill(skill="solve-skeleton")
+  -> 填写 solve()
+  -> WA/TLE 或不确定时调用 Skill(skill="solve-analyze")
+  -> Skill(skill="algo-annotation")
+
+选择题：
+  Skill(skill="choice-q-create")
+  -> Skill(skill="choice-q-drill")
+  -> 错题回流到下一轮练习
+
+进度检查：
+  Skill(skill="review-tracker")
 ```
-git clone → cd pass-llm-with-llm
-  │
-  ├── pip install mcp               # 可选：安装 exam-memory MCP Server 依赖
-  │
-  ├── 编辑 .mcp.json                # 注册 exam-memory，指向 shared/exam_memory/server.py
-  │
-  ├── 在 Claude Code 中打开项目
-  │     │
-  │     ├── 首次使用 → 说 "init" → init-guide Skill 引导完成配置
-  │     │
-  │     └── 日常使用 → 读 START_HERE.md → Skill Pipeline
-  │
-  └── （可选）配置环境级 MCP：ChatMem、mempalace、onefind
-        这些是外部工具，不由项目自带
-        如需使用，请在 Claude Code 环境中配置
+
+### 运行模式
+
+| Mode | 依赖 | 适用场景 |
+|------|------|----------|
+| Full MCP Mode | 仓库 Markdown + 可选 `exam-memory` MCP | 长期备考，需跨会话检索和画像更新 |
+| Local Markdown Mode | 仓库文件 | 默认低门槛工作流 |
+| Stateless Lite Mode | 当前聊天 + 返回的 append blocks | 临时机器、新用户演示、文件/工具不可用时恢复 |
+
+## 核心闭环
+
+```mermaid
+flowchart LR
+  A["题目或主题输入"] --> B["solve-skeleton"]
+  B --> C["solve-analyze"]
+  C --> D["algo-annotation"]
+  D --> E["mistake_log.md"]
+  E --> F["choice-q-create"]
+  F --> G["choice-q-drill"]
+  G --> E
+  E --> H["review-tracker"]
+  H --> I["HANDOFF.md"]
 ```
 
-### MCP 依赖说明
+关键不是“生成一次答案”，而是让今天记录的错误变成明天的提示、练习和复盘优先级。
 
-本项目**自带一个 MCP Server**（`exam-memory`），**引用外部 MCP** 需单独安装：
+## 核心特性
 
-| MCP Server | 是否自带 | 用途 | 配置方式 |
-|------------|:---:|------|---------|
-| `exam-memory` | 是 | 跨会话经验持久化 + 用户画像 | `pip install mcp` + 编辑 `.mcp.json` |
-| ChatMem | 否 | 跨会话对话记忆 | [外部安装](https://github.com/Rimagination/ChatMem/releases) |
-| mempalace | 否 | 结构化知识存储 | [外部安装](https://github.com/MemPalace/mempalace) |
-| onefind | 否 | 本地知识库检索 | [外部安装](https://github.com/iawnfoanaowt/OneFind) |
+| 功能 | 作用 |
+|------|------|
+| 算法 Skill Pipeline | 选择 ACM/OJ 骨架，诊断解法，生成中文 `# [防错]` 注释。 |
+| 交互式选择题训练 | 生成定向选择题，在 Claude Code VS Code 扩展中逐题作答、即时评分、记录弱点。 |
+| 本地错题闭环 | 将 WA/TLE 原因和选择题错误保存在目标目录下的 Markdown 日志中。 |
+| 可选 exam-memory MCP | 增加跨会话经验持久化、错误计数和用户画像读取。 |
+| 复习进度追踪 | 汇总进度、薄弱主题、就绪度趋势和今日必做清单。 |
+| 目标感知目录 | 可复用资料放在 `shared/`，目标考试资料放在 `targets/{target}/`。 |
 
-所有 Skill 在 MCP 不可用时自动降级为纯本地模式。若要启用项目自带 server，在 `.mcp.json` 中注册一个 stdio 命令运行 `shared/exam_memory/server.py`。
+## 仓库 Topics 建议
+
+建议在 GitHub 仓库设置这些 topics，提升搜索与推荐命中：
+
+```text
+education, llm, exam-prep, algorithm, interactive-quiz, claude-code,
+vscode-extension, mcp, ai-agents, python-oj, study-tools,
+spaced-repetition, local-first, knowledge-retrieval
+```
+
+## Agent / MCP 入口
+
+| 需求 | 入口 |
+|------|------|
+| session 启动 | [START_HERE.md](START_HERE.md) |
+| 项目规则与 Skill 路由 | [AGENTS.md](AGENTS.md) |
+| 当前交接与目标配置 | [HANDOFF.md](HANDOFF.md) |
+| Skill 定义 | `skills/` |
+| 目标考试资料 | `targets/{target}/` |
+| 共享 MCP server 与检索辅助 | `shared/exam_memory/` |
+| 贡献规范 | [CONTRIBUTING.md](CONTRIBUTING.md) |
+
+## 可选集成
+
+本项目优先保证本地 Markdown 模式可用。以下集成用于增加记忆、检索和连续性。
+
+| 工具 | 作用 | 是否自带 |
+|------|------|:---:|
+| `exam-memory` MCP | 跨会话错题经验持久化、用户画像读取、可选语义检索支持。 | 是 |
+| ChatMem | 对话级记忆，用于交接、继续、项目历史回忆。 | 否 |
+| MemPalace | 长期结构化知识存储与知识图谱工作流。 | 否 |
+| [OneFind](https://github.com/iawnfoanaowt/OneFind) | 外部本地知识库检索，可检索已有 Obsidian、Zotero 或本地文件夹。 | 否 |
+
+`exam-memory` 是本项目内负责写入备考经验的记忆层。OneFind 更适合作为只读的外部知识检索层，用来连接你已经维护在别处的学习资料。两者互补，不互相替代。
+
+如需启用项目自带 MCP server，安装最小 Python 依赖，复制 `.mcp.example.json` 为本机 `.mcp.json`，复制 `.env.example` 为本机 `.env`，在 `.mcp.json` 中注册运行 `shared/exam_memory/server.py` 的 stdio 命令。MCP 不可用时，Skills 会自动回退到本地 Markdown 文件；文件也不可写时，会返回 append blocks，并提醒 Lite/Portable Mode 只适合临时使用。
+
+### 可选增强能力配置
+
+基础 harness 不需要在线模型、embedding 模型、GPU 或 MCP server。下面这些只是在需要连续记忆、语义检索或自动出题时开启的增强项：
+
+| 能力 | 安装方式 | 配置方式 |
+|------|----------|----------|
+| `exam-memory` MCP | `cd shared/exam_memory` 后运行 `pip install .` | 复制 `.mcp.example.json` 为本机 `.mcp.json`，必要时调整路径 |
+| 本地 embedding 语义检索 | `pip install ".[embed]"` | 当前默认本地模型为 `BAAI/bge-m3`，首次使用会走 Hugging Face 缓存下载 |
+| 在线出题 LLM | `pip install ".[generate]"` | 设置 `EXAM_MEMORY_LLM_MODEL`；项目不提供默认在线模型 |
+
+本项目当前的 `BAAI/bge-m3` 路径是 CPU-only，不要求 CUDA、GPU 或 NVIDIA 驱动。未安装 `sentence-transformers` 或模型下载失败时，题库 CRUD、手动录题、Markdown 错题日志和词法检索仍可用，只是语义检索暂不可用。
+
+启用 embedding 后，可按需重建本地索引：
+
+```bash
+cd shared/exam_memory
+python -m exam_memory.rebuild_index --force
+```
+
+离线使用前，建议先在有网络的环境中完成模型缓存。后续 provider 配置落地后，也会支持通过 `EXAM_MEMORY_EMBEDDING_MODEL` 指向本地模型目录。
+
+出题 LLM 与 embedding 是两套接口：`QuestionBank` 只从 `EXAM_MEMORY_LLM_MODEL` 读取 chat completion 模型；embedding 配置不会被拿来生成题目。
+
+LiteLLM 配置示例：
+
+```bash
+# DeepSeek
+export EXAM_MEMORY_LLM_MODEL=deepseek/deepseek-chat
+export DEEPSEEK_API_KEY=...
+
+# Qwen / 通义千问（DashScope）
+export EXAM_MEMORY_LLM_MODEL=dashscope/qwen-plus
+export DASHSCOPE_API_KEY=...
+
+# OpenAI-compatible 本地或托管服务
+export EXAM_MEMORY_LLM_MODEL=openai/local-qwen
+export OPENAI_API_BASE=http://localhost:8000/v1
+export OPENAI_API_KEY=local-placeholder
+```
+
+### 常见故障
+
+| 现象 | 常见原因 | 处理方式 |
+|------|----------|----------|
+| `LLM 不可用：未配置 EXAM_MEMORY_LLM_MODEL` | 未配置出题模型 | 设置 `EXAM_MEMORY_LLM_MODEL`，或继续使用手动/本地题库流程 |
+| `LLM 不可用：litellm 未安装` | 未安装出题依赖 | 在 `shared/exam_memory` 下运行 `pip install ".[generate]"` |
+| embedding 导入或下载失败 | 缺少 `sentence-transformers`、网络不可用或 HF 缓存为空 | 运行 `pip install ".[embed]"`，提前缓存模型，或先使用词法检索/Markdown 模式 |
+| 向量索引过期或不兼容 | `vectorstore/` 由不同 embedding 配置生成 | 运行 `python -m exam_memory.rebuild_index --force` 重建 |
+| API key 报错 | 当前 shell 或 `.env` 未设置供应商密钥 | 在本机 `.env` 或 shell 环境中设置对应 provider key |
 
 ## Skill 一览
 
-| Skill | 功能 | MCP 依赖 |
+| Skill | 用途 | 是否必须 MCP |
 |-------|------|:---:|
-| init-guide | 首次使用导引：备考目标、日期、范围、用户画像 | 可选 |
-| solve-skeleton | 算法题骨架生成（8 模板 + 6 模式） | 无 |
-| solve-analyze | 解题诊断：代码对比 + 根因标签 | 可选 |
-| algo-annotation | 中文注释 + `# [防错]` 标记 | 无 |
-| choice-q-create | 定向选择题生成 | 可选 |
-| choice-q-drill | 交互答题 + 即时评分 | 可选 |
-| exam-assistant | 考试助手（经验检索 + 用户画像） | 核心 |
-| review-tracker | 进度汇总 + 就绪度趋势 | 无 |
-
-标记"可选"的 Skill 在 MCP 不可用时自动降级为纯本地模式。
-
-### ChatMem 增强（推荐）
-
-[ChatMem](https://github.com/Rimagination/ChatMem/releases) 提供跨会话对话记忆。非必需，但能显著提升以下 Skill 的体验：
-
-| Skill | ChatMem 增强效果 |
-|-------|-----------------|
-| review-tracker | 存储历史进度报告，实现跨会话趋势对比 |
-| exam-assistant | 回溯之前的答题会话和错题讨论，保持学习连续性 |
-| init-guide | 记忆上次配置过程，避免重复收集已知信息 |
-| solve-analyze | 跨会话关联诊断历史，识别反复出现的错误模式 |
-
-安装 ChatMem 并在 Claude Code 全局配置中注册。
-
-### MemPalace 增强（可选）
-
-[MemPalace](https://github.com/MemPalace/mempalace) 提供结构化知识存储与跨 wing 知识图谱。适合长期知识管理，超越单次备考周期：
-
-| 使用场景 | 增强效果 |
-|---------|---------|
-| 知识图谱 | 建模知识点前置关系（如 DP ← 背包问题，二分 ← 有序数组），实现定向复习 |
-| Agent 日记 | 每次 session 记录学习观察，构建可搜索的"我学到了什么"历史 |
-| 跨项目知识 | 将备考笔记与项目实战、面试准备、研究笔记关联 |
-
-适合与 review-tracker（知识图谱查覆盖缺口）和 exam-assistant（结构化检索历史洞察）配合使用。项目内 Skill 不直接调用 MemPalace，通过 Claude Code 手动使用其工具。
-
-### OneFind 增强（可选）
-
-[OneFind](https://github.com/iawnfoanaowt/OneFind) 从本地知识库（Obsidian 笔记库、Zotero 文献库、本地文件夹）检索内容。适合已有外部学习笔记的用户：
-
-| 使用场景 | 增强效果 |
-|---------|---------|
-| Obsidian 笔记 | 练习时搜索已有的 ML/算法笔记，关联相关概念 |
-| Zotero 文献库 | 为 `shared/cheatsheets/` 或 `targets/{target}/cheatsheets/` 中的 Transformer、GNN、Diffusion 主题检索参考论文 |
-| 混合检索 | 跨所有本地源执行词法 + 语义联合搜索 |
-
-适合与 choice-q-create（从笔记中搜索出题素材）、exam-assistant（解答时检索参考资料）和 review-tracker（检查笔记是否覆盖考试知识点）配合使用。项目内 Skill 不直接调用 OneFind，通过 Claude Code 手动使用其工具。
-
-#### OneFind + exam-memory：互补检索层
-
-OneFind 的 **folder source** 可以索引 `shared/exam_memory/experiences/` 目录，提供语义搜索能力。但 OneFind 是**只读检索**层设计，无法替代 exam-memory 的写入链路（保存经验 → 向量化 → 原子存储）。推荐组合方案：
-
-| 层级 | 角色 | 写入 | 读取 |
-|------|------|:----:|:----:|
-| `exam-memory` MCP | 经验 CRUD + 错误计数 + 用户画像 | 是（save, update） | 是（list, 按类型过滤） |
-| OneFind folder source | 经验文件的语义搜索覆盖层 | 否（仅索引刷新） | 是（语义 + 关键词） |
-
-**配置方式**：将 OneFind 的 `folder_library` 指向 `shared/exam_memory/experiences/`，然后使用 `onefind_search`（`target="folder"`）对历史经验做语义检索。通过 MCP 保存新经验后，调用 `onefind_index_refresh` 触发索引更新。
-
-## 路线图
-
-### V1（当前）— 稳定版
-
-- Skill Pipeline：solve-skeleton / solve-analyze / algo-annotation
-- 选择题引擎：出题 / 答题 / 评分
-- exam-memory MCP V1：本地文件式经验 CRUD + 用户画像
-- 进度追踪与错题反馈闭环
-
-### V2 — RAG + 语义检索
-
-将 `exam-memory` 从关键词匹配升级为语义检索：
-
-| 阶段 | 特性 | 依赖 |
-|------|------|------|
-| 1 | 经验文件自动向量化 → numpy 存储 | `sentence-transformers`（bge-m3） |
-| 2 | `list_experiences` 支持语义检索 | 阶段 1 |
-| 3 | LLM 自动推断用户画像 | LLM API |
-| 4 | 知识图谱关联推荐前置知识点 | 阶段 1 |
-
-### V2.5 — 复习调度
-
-把间隔复习纳入当前 dev 规划：
-
-- 在 `targets/{target}/progress/reviews/` 下维护文件式 review queue
-- 基于 SM-2 简化规则调度错题、薄弱知识点、选择题错误
-- 可选 MCP 工具：`list_due_reviews` 与 `mark_review_result`
-- 详见 [复习机制实现规划](docs/plans/2026-06-17-review-mechanism-implementation-plan.md)
-
-### V3 — 远期方向
-
-- **多模态**：截图题目 OCR → 自动识别题型并检索经验
-- **跨设备同步**：Git 或 WebDAV 同步经验文件
-- **可视化仪表盘**：强弱项热力图、错误趋势、复习计划
-
-### 开源改进
-
-- GitHub Issue & PR 模板（`.github/`）
-- `CHANGELOG.md`
+| `init-guide` | 首次使用导引：考试目标、日期、范围、用户画像。 | 可选 |
+| `solve-skeleton` | 生成算法题 ACM/OJ 输入输出骨架。 | 否 |
+| `solve-analyze` | 解题诊断、标准解法对比、根因标签。 | 可选 |
+| `algo-annotation` | 中文注释、`# [防错]` 标记、核心不变量总结。 | 否 |
+| `choice-q-create` | 根据考试配置、弱点和资料生成定向选择题。 | 可选 |
+| `choice-q-drill` | 交互答题、即时评分、错题反馈。 | 可选 |
+| `exam-assistant` | 带经验检索和用户画像意识的考试助手。 | 可选 |
+| `review-tracker` | 进度汇总、就绪度趋势、每日行动清单。 | 否 |
 
 ## 目录结构
 
-```
+```text
 pass-llm-with-llm/
-  AGENTS.md                    # 项目规则、Component Map、Skill Pipeline
-  START_HERE.md                # Session 启动引导 + Skill 调用指南
-  HANDOFF.md                   # Session 交接模板
+  AGENTS.md                    # 项目规则、组件图、Skill 路由
+  START_HERE.md                # Session 启动指南
+  HANDOFF.md                   # Session 交接与目标配置
   README.md                    # 英文文档
-  README_CN.md                 # 本文件（中文）
+  README_CN.md                 # 中文文档
 
   skills/                      # Claude Code Skill 定义
-    init-guide.md              # 首次使用导引（备考目标、日期、范围）
     solve-skeleton/            # 算法骨架模板
-    solve-analyze/             # 解题诊断引擎
-    algo-annotation.md         # 代码标注 + 防错标记
-    choice-q-create.md         # 选择题生成器
-    choice-q-drill.md          # 交互答题模式
-    exam-assistant.md          # MCP 考试助手
+    solve-analyze/             # 解题诊断流程
+    algo-annotation.md         # 注释与防错标记
+    choice-q-create.md         # 选择题生成
+    choice-q-drill.md          # 交互式刷题
+    exam-assistant.md          # MCP-aware 考试助手
     review-tracker.md          # 进度汇总
 
   targets/                     # 目标考试专属内容
     ai-lab/
-      exam_config.md           # 考试题型、分值、时间配置
-      cheatsheets/             # 目标专属 AI/ML 速记资料
-      daily/                   # 目标专属每日计划
-      progress/                # 选择题轮次、学习计划、考试分析、任务看板
-      prompts/                 # 目标专属 prompt 模板
-      sources/                 # 历史题型与目标专属参考资料
     pdd-algo/
-      exam_config.md           # PDD 算法笔试配置
-      python_oj_template.py    # 工具函数库
-      solutions_batch.py       # 考试真题解答集
-      practice/                # 按专题分类的练习题
-      solutions/               # 单题题解
-      mistake_log.md           # WA/TLE 错误模式记录
-      topic_checklist.md       # 知识点覆盖追踪
-      progress/                # 目标专属进度追踪
 
   shared/                      # 跨目标共享内容
-    cheatsheets/               # 通用 LLM/ML/项目表达速记资料
-    daily/                     # 共享每日计划（YYYY-MM-DD.md）
-    exam_memory/               # 自定义 MCP server 与经验库
-      server.py                # MCP 工具，经验持久化
-      experiences/             # 经验文件（YAML frontmatter + Markdown）
-      user_profile.json        # 用户画像（强弱项、偏好）
-    progress/                  # 共享进度与 task-board 文件
-    prompts/                   # 通用 prompt 模板
-
-  algorithms/                  # 兼容占位；活跃 OJ 资产在 targets/ 下
-  exam_memory/                 # 兼容占位；活跃 MCP 代码在 shared/exam_memory/
-  progress/                    # 兼容占位；活跃进度在 shared/ 或 targets/ 下
-  prompts/                     # Prompt 模板
+    cheatsheets/
+    daily/
+    exam_memory/               # 自带 MCP server 与经验库
+    progress/
+    prompts/
 ```
 
 ## 适配其他考试
 
-默认使用 `HANDOFF.md` 中配置的目标考试，核心机制可复用：
+1. 在 `targets/{target}/` 下创建或复制目标目录。
+2. 更新 `targets/{target}/exam_config.md` 中的题数、分值和时间。
+3. 将考试题型分析放入 `targets/{target}/sources/`。
+4. 将目标专属资料放入 `targets/{target}/cheatsheets/`，可复用资料放入 `shared/cheatsheets/`。
+5. 更新 [HANDOFF.md](HANDOFF.md)，让后续 session 知道当前活跃目标。
 
-1. 在 `targets/{target}/sources/` 下放入目标考试的题型分析
-2. 更新 `targets/{target}/exam_config.md` 中的题数、分值和时间
-3. 将目标专属资料放入 `targets/{target}/cheatsheets/`，可复用资料放入 `shared/cheatsheets/`
-4. 修改 `AGENTS.md` 中的 Exam Format 表格
+## 路线图
 
-## Contributing
+### Current
 
-见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+- 面向 ACM/OJ 的算法 Skill Pipeline。
+- 基于 Claude Code VS Code 扩展的交互式选择题训练。
+- 本地 Markdown 错题日志与进度追踪。
+- 可选 `exam-memory` MCP 持久化。
+
+### Next
+
+- 从错题和薄弱主题生成更强的复习调度。
+- 更好的题库生成与检索。
+- 更多可复用目标考试模板。
+
+### Later
+
+- 从截图输入题目的多模态能力。
+- 经验文件跨设备同步。
+- 强弱项、薄弱主题与复习计划分析仪表盘。
+
+## 参与贡献
+
+欢迎贡献能改善备考闭环的内容。适合切入的方向包括：
+
+- `targets/{target}/` 下的新考试目标模板；
+- `skills/` 下的 Skill prompt 或参考资料改进；
+- `shared/cheatsheets/` 下的通用速记资料；
+- 文档、示例和轻量测试覆盖。
+
+路径规则和 PR 要求见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+## 致谢
+
+本项目部分思路受到 [OneFind](https://github.com/iawnfoanaowt/OneFind) 启发，尤其是本地优先检索、Agent 可用资料组织、让个人知识更容易被搜索和复用等方向。OneFind 是外部项目和可选集成；本仓库不分发 OneFind 代码，也不表示自己是 OneFind 的官方扩展。
 
 ## License
 

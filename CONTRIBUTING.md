@@ -55,21 +55,27 @@ tools: [tool1, tool2]     # 依赖的 MCP 工具（如有）
 
 - frontmatter 必须包含 `name` 和 `description`。
 - 工作流步骤用有序列表，触发词用无序列表。
-- 引用其他文件用相对路径：`algorithms/mistake_log.md`。
+- 引用其他文件用相对路径，并优先使用当前目录结构：`targets/{target}/mistake_log.md`、`shared/cheatsheets/`、`shared/exam_memory/`。
 
 ## 5. 目录归属规则
 
 | 内容类型 | 存放位置 | 命名规则 |
 |----------|----------|----------|
-| 考试真题解答 | `algorithms/solutions_batch.py` | 统一编号 |
-| 非考试练习题 | `algorithms/practice/{topic}.py` | 按算法专题命名 |
-| 错误记录 | `algorithms/mistake_log.md` | 按主题分区，表格式 |
-| 每日计划 | `daily/YYYY-MM-DD.md` | 日期命名 |
-| 速记资料 | `llm/{topic}.md` | 主题命名 |
+| 考试真题解答 | `targets/{target}/solutions/` 或 `targets/{target}/solutions_batch.py` | 统一编号或单题文件 |
+| 非考试练习题 | `targets/{target}/practice/{topic}.py` | 按算法专题命名 |
+| 错误记录 | `targets/{target}/mistake_log.md` | 按主题分区，表格式 |
+| 计时模拟记录 | `targets/{target}/mock_exam_log.md` | 按日期追加 |
+| 目标专属每日计划 | `targets/{target}/daily/YYYY-MM-DD.md` | 日期命名 |
+| 共享每日计划 | `shared/daily/YYYY-MM-DD.md` | 日期命名 |
+| 目标专属速记资料 | `targets/{target}/cheatsheets/{topic}.md` | 主题命名 |
+| 通用速记资料 | `shared/cheatsheets/{topic}.md` | 主题命名 |
 | Skill 定义 | `skills/{name}.md` 或 `skills/{name}/SKILL.md` | kebab-case |
-| 进度追踪 | `progress/` | 项目内部管理 |
+| 目标进度追踪 | `targets/{target}/progress/` | 按 choice-questions、study-planning、task-board 等分区 |
+| 共享进度追踪 | `shared/progress/` | 跨目标通用任务或索引 |
 
-**不要**把练习题放进 `solutions_batch.py`，也不要考试题放进 `practice/`。
+**不要**把非考试练习题放进考试真题解答目录，也不要把考试真题放进 `practice/`。旧的 `algorithms/`、`llm/`、顶层 `daily/` 路径只应作为历史兼容占位，不应作为新贡献入口。
+
+错题、模拟记录和进度追踪默认是本地运行态数据。公开 PR 只应提交去个人化的示例、模板或说明，不应包含个人 `mistake_log.md`、`mock_exam_log.md` 或 `progress/` 记录。
 
 ## 6. Commit Message
 
@@ -97,12 +103,18 @@ docs: update GNN cheatsheet with message passing detail
 提交 PR 前确认：
 
 - [ ] 算法题已走 solve-skeleton → algo-annotation 完整流程
-- [ ] WA/TLE 错误已录入 `algorithms/mistake_log.md`
+- [ ] WA/TLE 错误已在本地记录（如适用），且本 PR 未包含个人日志
 - [ ] 新 Skill 有完整的 frontmatter（name, description）
 - [ ] 未引入不必要的第三方依赖
-- [ ] 不涉及 `exam_memory/` 个人数据（该目录在 `.gitignore`）
+- [ ] 不涉及个人经验数据（例如本地 `shared/exam_memory/experiences/` 中的私有记录）
 
-## 8. 不做的事
+## 8. 外部项目引用与许可
+
+如 PR 借鉴外部项目、论文、博客或工具设计，请在 README、文档或 PR 描述中注明来源链接和借鉴范围。不要复制外部项目的大段文档、代码或品牌表达，除非其许可证明确允许且 PR 中说明了许可证兼容性。
+
+OneFind、ChatMem、MemPalace 等外部工具只能作为可选集成或设计启发提及，不应写成项目自带能力或官方关联。
+
+## 9. 不做的事
 
 以下**不在本项目范围内**，请勿贡献：
 
