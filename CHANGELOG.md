@@ -15,5 +15,5 @@
 - README 中英双版、AGENTS.md 泛化（移除个人数据）
 
 ### Fixed
-- search_web 工具标记为废弃，指向 Claude Code 内置 WebSearch
+- search_web 工具已移除，统一使用 Claude Code 内置 WebSearch
 - python_oj_template.py 移除 sys.stdin.buffer 违规用法

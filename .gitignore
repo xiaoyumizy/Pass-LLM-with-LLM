@@ -37,7 +37,7 @@ _test_v2.py
 _verify_v2.py
 _verify_result.json
 
-# V2 review regression tests（dev-only，不同步 clean-main）
+# V2 review regression tests（dev-only，不提交到 main）
 tests/test_chunking.py
 tests/test_fts_store.py
 tests/test_hybrid_search.py
@@ -63,7 +63,10 @@ progress/reviews/*
 !progress/reviews/.gitkeep
 shared/progress/**
 !shared/progress/README.md
+!shared/progress/**/
 !shared/progress/**/.gitkeep
+!shared/progress/**/*.example.md
+!shared/progress/**/*.template.md
 targets/*/progress/**
 !targets/*/progress/**/.gitkeep
 targets/*/mistake_log.md
@@ -71,13 +74,14 @@ targets/*/mock_exam_log.md
 
 # MCP 与个人记忆工具（仅本地，不入 git）
 .mcp.json
+.env
 .claude/
 .codex/
 .serena/
 .chatmem/
 .mempalace/
 
-# 个人分支私有文件（dev-only，不允许合并到 clean-main）
+# 个人分支私有文件（dev-only，不允许合并到 main）
 skills/branch-ops.md
 skills/harness-dev-flow/
 skills/dev-review-flow/

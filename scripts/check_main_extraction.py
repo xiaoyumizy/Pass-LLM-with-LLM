@@ -44,6 +44,19 @@ _DENYLIST = [
 ]
 
 
+def _is_allowed_shared_progress_public_file(path: str) -> bool:
+    parts = _path_parts(path)
+    if len(parts) < 3 or parts[:2] != ["shared", "progress"]:
+        return False
+    filename = parts[-1]
+    return (
+        parts == ["shared", "progress", "README.md"]
+        or filename == ".gitkeep"
+        or filename.endswith(".example.md")
+        or filename.endswith(".template.md")
+    )
+
+
 def _git_staged() -> list[str]:
     # Deletions remove dev-only files from main and are safe for cleanup commits.
     result = subprocess.run(
@@ -68,6 +81,8 @@ def _parts_match(path_parts: list[str], pattern_parts: list[str]) -> bool:
 
 
 def _matches_denylist(path: str) -> str | None:
+    if _is_allowed_shared_progress_public_file(path):
+        return None
     path_parts = _path_parts(path)
     for entry in _DENYLIST:
         pattern_parts = _path_parts(entry.rstrip("/"))
@@ -88,7 +103,7 @@ def main() -> int:
     args = ap.parse_args()
     files = args.staged_files if args.staged_files is not None else _git_staged()
     if not files:
-        print("check_main_extraction: no staged files — nothing to check")
+        print("check_main_extraction: no staged files - nothing to check")
         return 0
     leaks: list[tuple[str, str]] = []
     for f in files:
@@ -96,11 +111,11 @@ def main() -> int:
         if match:
             leaks.append((f, match))
     if leaks:
-        print("DENYLIST LEAK — do not publish to main:", file=sys.stderr)
+        print("DENYLIST LEAK - do not publish to main:", file=sys.stderr)
         for path, rule in leaks:
-            print(f"  {path}  →  hits {rule}", file=sys.stderr)
+            print(f"  {path}  ->  hits {rule}", file=sys.stderr)
         return 1
-    print(f"check_main_extraction: {len(files)} staged files — no denylist violations")
+    print(f"check_main_extraction: {len(files)} staged files - no denylist violations")
     return 0
 
 

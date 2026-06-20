@@ -38,6 +38,7 @@ def hybrid_search(
     *,
     limit: int = 5,
     exp_type: str | None = None,
+    source_filter: str | None = None,
     dense_weight: float | None = None,
     k: int = RRF_K,
 ) -> list[dict[str, Any]]:
@@ -59,8 +60,33 @@ def hybrid_search(
     w = dense_weight if dense_weight is not None else preset["dense"]
     sparse_w = 1.0 - w
 
-    fts_hits = _safe(fts_store.search, query, type_filter=exp_type, limit=20)
-    vec_hits = _safe(vector_store.search, query, type_filter=exp_type, top_k=20)
+    if source_filter and source_filter != "all":
+        fts_hits = _safe(
+            fts_store.search,
+            query,
+            type_filter=exp_type,
+            source_filter=source_filter,
+            limit=20,
+        )
+        vec_hits = _safe(
+            vector_store.search,
+            query,
+            type_filter=exp_type,
+            source_filter=source_filter,
+            top_k=20,
+        )
+        fts_hits = [
+            hit for hit in fts_hits
+            if str(hit.get("canonical_key", "")).startswith(f"{source_filter}/")
+        ]
+        vec_hits = [
+            hit for hit in vec_hits
+            if str(hit.get("canonical_key", hit.get("metadata", {}).get("canonical_key", ""))).startswith(f"{source_filter}/")
+            or hit.get("metadata", {}).get("source_dir") == source_filter
+        ]
+    else:
+        fts_hits = _safe(fts_store.search, query, type_filter=exp_type, limit=20)
+        vec_hits = _safe(vector_store.search, query, type_filter=exp_type, top_k=20)
 
     scores: dict[str, float] = {}
     fts_meta: dict[str, dict] = {}
@@ -84,16 +110,27 @@ def hybrid_search(
         vec_data = vec_meta.get(key, {})
 
         text = vec_data.get("text") or fts_data.get("content") or ""
-        metadata = vec_data.get("metadata") or {
-            "title": fts_data.get("title", ""),
-            "knowledge": fts_data.get("knowledge", ""),
-        }
+        metadata = dict(vec_data.get("metadata") or {})
+        if not metadata:
+            metadata = {
+                "title": fts_data.get("title", ""),
+                "knowledge": fts_data.get("knowledge", ""),
+                "type": fts_data.get("type", ""),
+            }
+        if "/" in key:
+            source_dir, file_name = key.split("/", 1)
+            metadata.setdefault("source_dir", source_dir)
+            metadata.setdefault("file_name", file_name)
+        else:
+            metadata.setdefault("file_name", key)
+        metadata.setdefault("canonical_key", key)
 
         results.append({
             "score": round(score, 4),
             "fts_score": fts_data.get("score"),
             "vec_score": vec_data.get("score"),
             "text": text,
+            "canonical_key": key,
             "metadata": metadata,
         })
 

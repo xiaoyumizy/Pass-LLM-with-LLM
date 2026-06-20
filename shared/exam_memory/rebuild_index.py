@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-def _parse_fp(fp: str):
+def _parse_fp(fp: str, source_dir: str):
     text = Path(fp).read_text(encoding="utf-8")
     meta = {}
     body = text
@@ -31,8 +31,26 @@ def _parse_fp(fp: str):
         body = parts[2].strip() if len(parts) >= 3 else ""
     name = Path(fp).name
     meta["file_name"] = name
+    meta["source_dir"] = source_dir
+    meta["canonical_key"] = f"{source_dir}/{name}"
     meta.setdefault("id", name)
     return meta, body
+
+
+def _iter_entry_files(base_dir: Path, source_dirs: list[str], type_filter: str | None):
+    """Yield parsed entries from allowed data directories."""
+    for source_dir in source_dirs:
+        data_dir = base_dir / source_dir
+        for fp in glob.glob(str(data_dir / "*.md")):
+            path = Path(fp)
+            if path.name.upper() == "README.MD":
+                continue
+            meta, body = _parse_fp(fp, source_dir)
+            if not meta.get("type"):
+                continue
+            if type_filter and meta.get("type") != type_filter:
+                continue
+            yield path, meta, body
 
 
 def main() -> int:
@@ -46,34 +64,36 @@ def main() -> int:
     ap.add_argument("--fts-only", action="store_true")
     ap.add_argument("--vec-only", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--include-bank", action="store_true",
+                    help="兼容旧调用；默认已包含 bank/")
+    ap.add_argument("--bank-only", action="store_true",
+                    help="仅重建 bank/ 题库索引")
     args = ap.parse_args()
 
     from exam_memory.vector_store import BASE_DIR, NumpyVectorStore
     from exam_memory.fts_store import FTSStore
     from exam_memory.embedding import is_available, encode
 
-    exp_dir = BASE_DIR / "experiences"
     type_filter = args.type
+    source_dirs = ["bank"] if args.bank_only else ["experiences", "bank"]
 
-    all_files = glob.glob(str(exp_dir / "*.md"))
-    if type_filter:
-        files = [fp for fp in all_files
-                 if _parse_fp(fp)[0].get("type") == type_filter]
-    else:
-        files = all_files
+    entries = list(_iter_entry_files(BASE_DIR, source_dirs, type_filter))
+    files = [path for path, _, _ in entries]
 
     if not files:
-        print("[rebuild] experiences/ 为空，无需重建")
+        label = "bank/" if args.bank_only else "experiences/ + bank/"
+        print(f"[rebuild] {label} 无可索引条目，无需重建")
         return 0
 
-    docs = [_parse_fp(fp) for fp in files]
+    docs = [(m, b) for _, m, b in entries]
     metas = [m for m, _ in docs]
     bodies = [b for _, b in docs]
     total_size = sum(len(b) for b in bodies)
-    latest = max(Path(fp).stat().st_mtime for fp in files)
+    latest = max(path.stat().st_mtime for path in files)
     latest_str = datetime.fromtimestamp(latest, tz=timezone.utc).isoformat()
+    source_label = "bank/" if args.bank_only else "experiences/ + bank/"
 
-    print(f"[rebuild] 扫描到 {len(files)} 条经验（{type_filter or '全部'}）")
+    print(f"[rebuild] 扫描到 {len(files)} 条条目（{source_label}，{type_filter or '全部'}）")
     print(f"[rebuild] 签名: count={len(files)}, size={total_size}, mtime={latest_str}")
 
     if args.dry_run:
@@ -100,7 +120,7 @@ def main() -> int:
                         m.setdefault("signature", {})["file_count"] = len(files)
                         m.setdefault("signature", {})["total_size"] = total_size
                         m.setdefault("signature", {})["latest_mtime"] = latest_str
-                        m["schema_version"] = 2
+                        m["index_version"] = 1
                         store._meta.append(m)
                     store.save()
                     print(f"[rebuild] 向量完成: {len(metas)} 条, {store._embs.shape}")
@@ -116,7 +136,7 @@ def main() -> int:
             print(f"[rebuild] FTS 已存在（{n} 条），加 --force 覆盖")
         else:
             fts.clear()
-            docs2 = [{"canonical_key": m.get("file_name", m.get("id", "")),
+            docs2 = [{"canonical_key": m.get("canonical_key", m.get("file_name", m.get("id", ""))),
                       "title": m.get("title", m.get("knowledge", "")),
                       "knowledge": m.get("knowledge", ""),
                       "content": b, "type": m.get("type", "")}

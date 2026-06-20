@@ -5,9 +5,13 @@
 """
 from __future__ import annotations
 
+import sys
+from types import SimpleNamespace
+
 import pytest
 
 from exam_memory.question_bank import (
+    LlmCallResult,
     QuestionBank,
     QuestionParser,
     QualityValidator,
@@ -443,7 +447,12 @@ C
 随机 pivot 避免最坏情况 O(n^2)。
 ---
 """
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: mock_raw)
+        monkeypatch.setattr(
+            bank,
+            "_call_llm",
+            lambda s, u: LlmCallResult.success(mock_raw),
+        )
+        monkeypatch.setattr(bank, "_retrieve", lambda *args, **kwargs: [])
         return bank
 
     def test_generate_saves_questions(self, bank_with_mock):
@@ -468,26 +477,140 @@ C
             assert s["reviewed"] is False
 
     def test_generate_no_llm(self, tmp_path, monkeypatch):
-        """litellm 不可用时返回 error。"""
+        """LLM 调用不可用时返回 error。"""
         bank = QuestionBank(bank_dir=tmp_path)
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: None)
+        monkeypatch.setattr(
+            bank,
+            "_call_llm",
+            lambda s, u: LlmCallResult.failure("LLM 不可用：litellm 未安装"),
+        )
+        monkeypatch.setattr(bank, "_retrieve", lambda *args, **kwargs: [])
         result = bank.generate(topic="x", count=1)
-        assert result["error"] is not None
+        assert result["error"] == "LLM 不可用：litellm 未安装"
         assert result["saved"] == []
 
     def test_generate_rejects_bad_output(self, tmp_path, monkeypatch):
         bank = QuestionBank(bank_dir=tmp_path)
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: "not a valid question format")
+        monkeypatch.setattr(
+            bank,
+            "_call_llm",
+            lambda s, u: LlmCallResult.success("not a valid question format"),
+        )
+        monkeypatch.setattr(bank, "_retrieve", lambda *args, **kwargs: [])
         result = bank.generate(topic="x", count=1)
-        assert result["error"] is not None
-        assert len(result["saved"]) == 0
+        assert result["error"] == "LLM 输出未解析出任何题目"
+        assert result["saved"] == []
+        assert list(tmp_path.glob("*.md")) == []
 
     def test_generate_rejects_invalid_options_count(self, tmp_path, monkeypatch):
         bank = QuestionBank(bank_dir=tmp_path)
         raw = "## 题\n题干\n### 选项\n**A.** x\n**B.** y\n### 答案\nA\n### 解析\np\n"
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: raw)
+        monkeypatch.setattr(bank, "_call_llm", lambda s, u: LlmCallResult.success(raw))
+        monkeypatch.setattr(bank, "_retrieve", lambda *args, **kwargs: [])
         result = bank.generate(topic="x", count=1)
         assert len(result["rejected"]) >= 1
+
+
+class TestLLMConfig:
+    def test_call_llm_requires_exam_memory_model(self, tmp_path, monkeypatch):
+        bank = QuestionBank(bank_dir=tmp_path)
+        monkeypatch.delenv("EXAM_MEMORY_LLM_MODEL", raising=False)
+
+        called = False
+
+        def fake_completion(**kwargs):
+            nonlocal called
+            called = True
+            return SimpleNamespace()
+
+        monkeypatch.setitem(
+            sys.modules,
+            "litellm",
+            SimpleNamespace(completion=fake_completion),
+        )
+
+        result = bank._call_llm("system", "user")
+
+        assert result == LlmCallResult.failure(
+            "LLM 不可用：未配置 EXAM_MEMORY_LLM_MODEL",
+        )
+        assert called is False
+
+    def test_call_llm_uses_configured_model(self, tmp_path, monkeypatch):
+        bank = QuestionBank(bank_dir=tmp_path)
+        monkeypatch.setenv("EXAM_MEMORY_LLM_MODEL", "deepseek/deepseek-chat")
+        captured = {}
+
+        def fake_completion(**kwargs):
+            captured.update(kwargs)
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(content="raw question output"),
+                    ),
+                ],
+            )
+
+        monkeypatch.setitem(
+            sys.modules,
+            "litellm",
+            SimpleNamespace(completion=fake_completion),
+        )
+
+        result = bank._call_llm("system", "user")
+
+        assert result == LlmCallResult.success("raw question output")
+        assert captured["model"] == "deepseek/deepseek-chat"
+        assert captured["messages"] == [
+            {"role": "system", "content": "system"},
+            {"role": "user", "content": "user"},
+        ]
+
+    def test_call_llm_reports_missing_litellm(self, tmp_path, monkeypatch):
+        bank = QuestionBank(bank_dir=tmp_path)
+        monkeypatch.setenv("EXAM_MEMORY_LLM_MODEL", "deepseek/deepseek-chat")
+        monkeypatch.setitem(sys.modules, "litellm", None)
+
+        result = bank._call_llm("system", "user")
+
+        assert result == LlmCallResult.failure("LLM 不可用：litellm 未安装")
+
+    def test_call_llm_reports_api_failure(self, tmp_path, monkeypatch):
+        bank = QuestionBank(bank_dir=tmp_path)
+        monkeypatch.setenv("EXAM_MEMORY_LLM_MODEL", "deepseek/deepseek-chat")
+
+        def fake_completion(**kwargs):
+            raise RuntimeError("boom")
+
+        monkeypatch.setitem(
+            sys.modules,
+            "litellm",
+            SimpleNamespace(completion=fake_completion),
+        )
+
+        result = bank._call_llm("system", "user")
+
+        assert result == LlmCallResult.failure("LLM 调用失败：boom")
+
+    def test_pipeline_error_result_does_not_save_partial_question(
+        self, tmp_path, monkeypatch,
+    ):
+        bank = QuestionBank(bank_dir=tmp_path)
+        monkeypatch.setattr(
+            bank,
+            "_call_llm",
+            lambda s, u: LlmCallResult.failure("LLM 调用失败：boom"),
+        )
+        monkeypatch.setattr(bank, "_retrieve", lambda *args, **kwargs: [])
+
+        result = bank.generate(topic="x", count=1)
+
+        assert result["error"] == "LLM 调用失败：boom"
+        assert result["saved"] == []
+        assert result["validated"] == []
+        assert result["rejected"] == []
+        assert result["raw_llm_output"] is None
+        assert list(tmp_path.glob("*.md")) == []
 
 
 # ── 三类提取管道 ──────────────────────────────────────────────
@@ -516,16 +639,20 @@ C
 ---
 """
 
+    def _mock_success(self) -> LlmCallResult:
+        return LlmCallResult.success(self.MOCK_RAW)
+
     def test_rag_extract_saves(self, tmp_path, monkeypatch):
         bank = QuestionBank(bank_dir=tmp_path)
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: self.MOCK_RAW)
+        monkeypatch.setattr(bank, "_call_llm", lambda s, u: self._mock_success())
+        monkeypatch.setattr(bank, "_retrieve", lambda *args, **kwargs: [])
         result = bank.rag_extract(topic="哈希表", count=1, q_type="算法")
         assert result["error"] is None
         assert len(result["saved"]) == 1
 
     def test_text_extract_saves(self, tmp_path, monkeypatch):
         bank = QuestionBank(bank_dir=tmp_path)
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: self.MOCK_RAW)
+        monkeypatch.setattr(bank, "_call_llm", lambda s, u: self._mock_success())
         result = bank.text_extract(
             source_text="哈希表是 O(1) 查找的数据结构。",
             topic="哈希表", count=1, q_type="算法",
@@ -537,9 +664,11 @@ C
         """验证 source_text 出现在 prompt 中。"""
         bank = QuestionBank(bank_dir=tmp_path)
         captured = {}
+
         def mock_llm(system, user):
             captured["user"] = user
-            return self.MOCK_RAW
+            return self._mock_success()
+
         monkeypatch.setattr(bank, "_call_llm", mock_llm)
         bank.text_extract(
             source_text="快排平均 O(n log n)", topic="排序", count=1,
@@ -548,7 +677,7 @@ C
 
     def test_direct_extract_saves(self, tmp_path, monkeypatch):
         bank = QuestionBank(bank_dir=tmp_path)
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: self.MOCK_RAW)
+        monkeypatch.setattr(bank, "_call_llm", lambda s, u: self._mock_success())
         result = bank.direct_extract(topic="BFS", count=1, q_type="算法")
         assert result["error"] is None
         assert len(result["saved"]) == 1
@@ -557,9 +686,11 @@ C
         """验证直出模式 prompt 中无参考资料。"""
         bank = QuestionBank(bank_dir=tmp_path)
         captured = {}
+
         def mock_llm(system, user):
             captured["user"] = user
-            return self.MOCK_RAW
+            return self._mock_success()
+
         monkeypatch.setattr(bank, "_call_llm", mock_llm)
         bank.direct_extract(topic="DFS", count=1)
         assert "参考资料" not in captured["user"]
@@ -567,7 +698,8 @@ C
     def test_generate_equals_rag_extract(self, tmp_path, monkeypatch):
         """generate() 向后兼容，等价于 rag_extract()。两者共享管道。"""
         bank = QuestionBank(bank_dir=tmp_path)
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: self.MOCK_RAW)
+        monkeypatch.setattr(bank, "_call_llm", lambda s, u: self._mock_success())
+        monkeypatch.setattr(bank, "_retrieve", lambda *args, **kwargs: [])
         r1 = bank.generate(topic="哈希表", count=1)
         assert r1["error"] is None
         assert len(r1["saved"]) == 1
@@ -579,13 +711,21 @@ C
 
     def test_text_extract_no_llm(self, tmp_path, monkeypatch):
         bank = QuestionBank(bank_dir=tmp_path)
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: None)
+        monkeypatch.setattr(
+            bank,
+            "_call_llm",
+            lambda s, u: LlmCallResult.failure("LLM 不可用：litellm 未安装"),
+        )
         result = bank.text_extract(source_text="x", topic="x", count=1)
         assert result["error"] is not None
 
     def test_direct_extract_no_llm(self, tmp_path, monkeypatch):
         bank = QuestionBank(bank_dir=tmp_path)
-        monkeypatch.setattr(bank, "_call_llm", lambda s, u: None)
+        monkeypatch.setattr(
+            bank,
+            "_call_llm",
+            lambda s, u: LlmCallResult.failure("LLM 不可用：litellm 未安装"),
+        )
         result = bank.direct_extract(topic="x", count=1)
         assert result["error"] is not None
 
@@ -740,10 +880,18 @@ class TestDedup:
 # ── search ────────────────────────────────────────────────────
 
 class TestSearch:
-    def test_search_empty_bank(self, tmp_bank):
+    def _stub_indexes(self, monkeypatch):
+        monkeypatch.setattr("exam_memory.fts_store.FTSStore", lambda: object())
+        monkeypatch.setattr("exam_memory.vector_store.NumpyVectorStore", lambda: object())
+
+    def test_search_empty_bank(self, tmp_bank, monkeypatch):
+        self._stub_indexes(monkeypatch)
+        monkeypatch.setattr("exam_memory.hybrid_search.hybrid_search", lambda *args, **kwargs: [])
         assert tmp_bank.search("anything") == []
 
-    def test_search_with_items(self, tmp_bank):
+    def test_search_with_items(self, tmp_bank, monkeypatch):
+        self._stub_indexes(monkeypatch)
+        monkeypatch.setattr("exam_memory.hybrid_search.hybrid_search", lambda *args, **kwargs: [])
         tmp_bank.add_manual(
             title="两数之和", content="哈希表 O(n) 查找两数和",
             q_type="算法", knowledge="双指针", answer="C",
@@ -751,6 +899,38 @@ class TestSearch:
         )
         results = tmp_bank.search("哈希表")
         assert len(results) >= 1
+        assert results[0]["knowledge"] == "双指针"
+
+    def test_search_hybrid_hit_uses_bank_canonical_key(self, tmp_bank, monkeypatch):
+        self._stub_indexes(monkeypatch)
+        filename = tmp_bank.add_manual(
+            title="两数之和", content="哈希表 O(n) 查找两数和",
+            q_type="算法", knowledge="双指针", answer="C",
+            options={"A": "1", "B": "2", "C": "3", "D": "4"},
+        )
+        qid = filename.replace(".md", "")
+
+        captured = {}
+
+        def fake_hybrid_search(query, fts, vec, limit=5, exp_type=None, source_filter=None):
+            captured["source_filter"] = source_filter
+            return [{
+                "canonical_key": "experiences/exp.md",
+                "metadata": {"source_dir": "experiences", "file_name": "exp.md"},
+                "text": "experience snippet",
+                "score": 0.9,
+            }, {
+                "canonical_key": f"bank/{filename}",
+                "metadata": {"source_dir": "bank", "file_name": f"{qid}.md"},
+                "text": "indexed snippet",
+                "score": 1.0,
+            }]
+
+        monkeypatch.setattr("exam_memory.hybrid_search.hybrid_search", fake_hybrid_search)
+        results = tmp_bank.search("哈希表")
+        assert captured["source_filter"] == "bank"
+        assert len(results) == 1
+        assert results[0]["question_id"] == qid
         assert results[0]["knowledge"] == "双指针"
 
 

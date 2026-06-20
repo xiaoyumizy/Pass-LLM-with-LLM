@@ -26,10 +26,10 @@ init-guide 会引导你填写备考目标、考试范围、目标日期，并自
 
 ## 新 Session 先读
 
-1. `AGENTS.md`：确认目标、优先级和限制，尤其是 Skill Pipeline 和 Component Map。
+1. `AGENTS.md`：确认目标、优先级、运行模式和关键边界。
 2. `HANDOFF.md`：了解上次完成了什么。
 3. 今天对应的 `shared/daily/YYYY-MM-DD.md`：直接执行当天任务，底部 Problem Log 记录每题结果。
-4. `targets/{target}/progress/task-board.md` 或 `shared/progress/task-board.md`：更新任务状态。
+4. `targets/{target}/progress/task-board/task-board.md` 或 `shared/progress/task-board/task-board.md`：更新任务状态。
 5. `targets/{target}/mistake_log.md` 和 `targets/{target}/mock_exam_log.md`：复盘最近错误。
 6. `Skill(skill="review-tracker")`：快速查看跨维度进度报告和今日必做清单（含到期复习项）。
 

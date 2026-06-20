@@ -105,6 +105,7 @@ The important part is the feedback path: mistakes recorded today become tomorrow
 | Interactive Choice Drill | Generates targeted choice questions, presents them interactively in Claude Code VS Code extension, scores answers, and records weak topics. |
 | Local Mistake Loop | Keeps WA/TLE causes and choice-question mistakes in target-specific Markdown logs. |
 | Optional exam-memory MCP | Adds cross-session experience persistence, error counting, and user profile retrieval. |
+| Question Bank and Source Retrieval | Multi-source index across `bank/` and `experiences/`, manifest-aligned sources, `QuestionBank.search()` with lexical and hybrid retrieval. |
 | Review Tracker | Aggregates progress, weak topics, readiness trends, and today's must-do list. |
 | Target-Aware Layout | Stores reusable material under `shared/` and exam-specific material under `targets/{target}/`. |
 
@@ -164,6 +165,8 @@ cd shared/exam_memory
 python -m exam_memory.rebuild_index --force
 ```
 
+By default the rebuild scans both `experiences/` and `bank/`. Use `--bank-only` to rebuild only the question-bank index.
+
 For offline use, cache the model once on a machine with network access before going offline. Future provider configuration will also support pointing `EXAM_MEMORY_EMBEDDING_MODEL` at a local model directory.
 
 Question generation is separate from embeddings. `QuestionBank` reads only `EXAM_MEMORY_LLM_MODEL` for chat completion, and embedding settings are never used to generate questions.
@@ -212,7 +215,7 @@ export OPENAI_API_KEY=local-placeholder
 
 ```text
 pass-llm-with-llm/
-  AGENTS.md                    # Project rules, component map, skill routing
+  AGENTS.md                    # Agent execution contract and skill routing
   START_HERE.md                # Session bootstrap guide
   HANDOFF.md                   # Session handoff and target setup
   README.md                    # English documentation
@@ -259,7 +262,8 @@ pass-llm-with-llm/
 ### Next
 
 - Stronger review scheduling from mistakes and weak topics.
-- Better question-bank generation and retrieval.
+- Semantic dedup, difficulty calibration, and retrieval evaluation reports.
+- GitHub / Web connectors for external question sources.
 - More reusable target exam templates.
 
 ### Later

@@ -75,7 +75,7 @@ tools: [tool1, tool2]     # 依赖的 MCP 工具（如有）
 
 **不要**把非考试练习题放进考试真题解答目录，也不要把考试真题放进 `practice/`。旧的 `algorithms/`、`llm/`、顶层 `daily/` 路径只应作为历史兼容占位，不应作为新贡献入口。
 
-错题、模拟记录和进度追踪默认是本地运行态数据。公开 PR 只应提交去个人化的示例、模板或说明，不应包含个人 `mistake_log.md`、`mock_exam_log.md` 或 `progress/` 记录。
+错题、模拟记录和进度追踪默认是本地运行态数据。公开 PR 只应提交去个人化的示例、模板或说明，不应包含个人 `mistake_log.md`、`mock_exam_log.md` 或 `progress/` 记录。`shared/progress/**` 只允许公开 `README.md`、`.gitkeep`、`*.example.md` 和 `*.template.md`，真实 task board 与复盘文件必须留在本地或 dev 分支。
 
 ## 6. Commit Message
 

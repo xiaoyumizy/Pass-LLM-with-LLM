@@ -163,19 +163,18 @@ class SourceConnector:
     def _looks_like_path(s: str) -> bool:
         """启发式判断字符串是否像文件路径。
 
-        保守策略：仅当含路径分隔符且扩展名已知，
-        或路径实际存在时才判定为路径，避免中文含 / 时误判。
+        保守策略：实际存在的路径，或带目录/盘符且有已知扩展名的字符串，才判定为路径。
+        避免普通文本（例如 "please review notes.md"）被误路由到文件读取。
         """
         if not s:
             return False
         p = Path(s)
-        _KNOWN_EXTS = {".md", ".txt", ".py", ".json", ".yaml", ".yml", ".csv", ".html"}
-        has_sep = "/" in s or "\\" in s
-        if p.suffix.lower() in _KNOWN_EXTS and has_sep:
-            return True
         if p.exists():
             return True
-        return False
+        _KNOWN_EXTS = {".md", ".txt", ".py", ".json", ".yaml", ".yml", ".csv", ".html"}
+        if p.suffix.lower() not in _KNOWN_EXTS:
+            return False
+        return p.is_absolute() or p.parent != Path(".")
 
     @staticmethod
     def _make_error(msg: str) -> dict[str, Any]:

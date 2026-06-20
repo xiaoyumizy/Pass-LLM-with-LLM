@@ -105,6 +105,7 @@ flowchart LR
 | 交互式选择题训练 | 生成定向选择题，在 Claude Code VS Code 扩展中逐题作答、即时评分、记录弱点。 |
 | 本地错题闭环 | 将 WA/TLE 原因和选择题错误保存在目标目录下的 Markdown 日志中。 |
 | 可选 exam-memory MCP | 增加跨会话经验持久化、错误计数和用户画像读取。 |
+| 题库与知识源检索 | 多源索引覆盖 `bank/` 与 `experiences/`，manifest 对齐来源，`QuestionBank.search()` 支持词法与混合检索。 |
 | 复习进度追踪 | 汇总进度、薄弱主题、就绪度趋势和今日必做清单。 |
 | 目标感知目录 | 可复用资料放在 `shared/`，目标考试资料放在 `targets/{target}/`。 |
 
@@ -164,6 +165,8 @@ cd shared/exam_memory
 python -m exam_memory.rebuild_index --force
 ```
 
+默认重建会扫描 `experiences/` 和 `bank/` 两个目录。使用 `--bank-only` 可只重建题库索引。
+
 离线使用前，建议先在有网络的环境中完成模型缓存。后续 provider 配置落地后，也会支持通过 `EXAM_MEMORY_EMBEDDING_MODEL` 指向本地模型目录。
 
 出题 LLM 与 embedding 是两套接口：`QuestionBank` 只从 `EXAM_MEMORY_LLM_MODEL` 读取 chat completion 模型；embedding 配置不会被拿来生成题目。
@@ -212,7 +215,7 @@ export OPENAI_API_KEY=local-placeholder
 
 ```text
 pass-llm-with-llm/
-  AGENTS.md                    # 项目规则、组件图、Skill 路由
+  AGENTS.md                    # Agent 执行契约与 Skill 路由
   START_HERE.md                # Session 启动指南
   HANDOFF.md                   # Session 交接与目标配置
   README.md                    # 英文文档
@@ -259,7 +262,8 @@ pass-llm-with-llm/
 ### Next
 
 - 从错题和薄弱主题生成更强的复习调度。
-- 更好的题库生成与检索。
+- 语义去重、难度校准和检索评估报告。
+- GitHub / Web 外部题库连接器。
 - 更多可复用目标考试模板。
 
 ### Later

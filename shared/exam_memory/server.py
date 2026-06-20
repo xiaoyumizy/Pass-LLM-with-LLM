@@ -1,7 +1,7 @@
 """考试经验沉淀 MCP Server
 
 提供工具：list_experiences, save_experience, inc_error_count,
-get_user_profile, update_user_profile, search_web（废弃）
+get_user_profile, update_user_profile, mount_source, list_sources, fetch_from_source
 """
 
 import asyncio
@@ -134,17 +134,6 @@ TOOL_SCHEMAS = [
                 }
             },
             "required": ["diff"],
-        },
-    ),
-    Tool(
-        name="search_web",
-        description="[废弃] 联网搜索已迁移至 Claude Code 内置 WebSearch 工具，此工具保留仅作向后兼容。",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "query": {"type": "string", "description": "搜索关键词"},
-            },
-            "required": ["query"],
         },
     ),
     Tool(
@@ -296,11 +285,6 @@ def _deep_merge(base: dict, overlay: dict) -> dict:
     return merged
 
 
-def _search_ddg(query: str) -> str:
-    """[废弃] 请使用 Claude Code 内置 WebSearch 替代。保留仅作向后兼容。"""
-    return "此工具已废弃，请使用 Claude Code 内置 WebSearch 进行联网搜索。"
-
-
 def _list_experiences_legacy(
     exp_type: str, limit: int
 ) -> list[TextContent]:
@@ -319,7 +303,9 @@ def _list_experiences_semantic(
 ) -> list[TextContent]:
     try:
         store = _get_vec()
-        results = store.search(query, top_k=limit, type_filter=exp_type)
+        results = store.search(
+            query, top_k=limit, type_filter=exp_type, source_filter="experiences"
+        )
     except Exception:
         results = []
 
@@ -345,7 +331,9 @@ def _list_experiences_hybrid(
 
         fts = _get_fts()
         vec = _get_vec()
-        results = hybrid_search(query, fts, vec, limit=limit, exp_type=exp_type)
+        results = hybrid_search(
+            query, fts, vec, limit=limit, exp_type=exp_type, source_filter="experiences"
+        )
     except Exception:
         results = []
 
@@ -373,7 +361,9 @@ def _list_experiences_fts(
     """纯 FTS 词法检索（无需 embedding 依赖）。"""
     try:
         store = _get_fts()
-        results = store.search(query, limit=limit, type_filter=exp_type)
+        results = store.search(
+            query, limit=limit, type_filter=exp_type, source_filter="experiences"
+        )
     except Exception:
         results = []
 
@@ -445,6 +435,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             store = _get_vec()
             meta = dict(frontmatter)
             meta["file_name"] = filename
+            meta["source_dir"] = "experiences"
+            meta["canonical_key"] = f"experiences/{filename}"
             store.upsert(filename, doc, meta)
         except Exception:
             pass
@@ -452,7 +444,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         try:
             fts = _get_fts()
             fts.upsert(
-                canonical_key=filename,
+                canonical_key=f"experiences/{filename}",
                 title=title,
                 knowledge=knowledge,
                 content=content,
@@ -513,12 +505,6 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         profile = _deep_merge(profile, diff)
         _save_profile(profile)
         return [TextContent(type="text", text="画像已更新。")]
-
-    # ── search_web ──
-    if name == "search_web":
-        query = arguments["query"]
-        result = _search_ddg(query)
-        return [TextContent(type="text", text=result)]
 
     # ── mount_source ──
     if name == "mount_source":
@@ -681,10 +667,10 @@ async def main():
         )
 
 
-def sync_main() -> None:
-    """console_scripts 入口包装器：启动 async 事件循环。"""
+def cli_main() -> None:
+    """Synchronous console-script entry point."""
     asyncio.run(main())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    cli_main()

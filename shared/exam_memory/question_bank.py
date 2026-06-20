@@ -15,6 +15,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import glob
 import logging
 import os
@@ -86,6 +88,22 @@ def _build_filename(q_type: str, knowledge: str, bank_dir: Path = BANK_DIR, seq:
 
 
 # ── LLM 生成管道 ──────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class LlmCallResult:
+    """统一封装出题 LLM 调用结果，避免 pipeline 依赖 str/dict 混合返回。"""
+
+    ok: bool
+    content: str = ""
+    error: str | None = None
+
+    @classmethod
+    def success(cls, content: str) -> "LlmCallResult":
+        return cls(ok=True, content=content)
+
+    @classmethod
+    def failure(cls, error: str) -> "LlmCallResult":
+        return cls(ok=False, error=error)
 
 class PromptBuilder:
     """构造题库生成 prompt（system + user context + format spec）。"""
@@ -664,9 +682,14 @@ class QuestionBank:
             "error": None,
         }
 
-        raw = self._call_llm(system_prompt, user_prompt)
-        if raw is None:
-            result["error"] = "LLM 不可用（litellm 未安装或未配置 API key）"
+        llm_result = self._call_llm(system_prompt, user_prompt)
+        if not llm_result.ok:
+            result["error"] = llm_result.error or "LLM 调用失败"
+            return result
+
+        raw = llm_result.content
+        if not raw:
+            result["error"] = "LLM 不可用：未返回题目内容"
             return result
         result["raw_llm_output"] = raw
 
@@ -714,7 +737,9 @@ class QuestionBank:
 
             fts = FTSStore()
             vec = NumpyVectorStore()
-            hits = hybrid_search(query, fts, vec, limit=limit, exp_type=q_type)
+            hits = hybrid_search(
+                query, fts, vec, limit=limit, exp_type=q_type, source_filter="bank"
+            )
             fts.close()
         except Exception as e:
             logger.debug("hybrid_search 失败，降级为全文扫描：%s", e)
@@ -727,7 +752,18 @@ class QuestionBank:
         for hit in hits:
             text = hit.get("text", "")
             meta = hit.get("metadata", {})
-            qid = meta.get("file_name", "").replace(".md", "")
+            canonical_key = hit.get("canonical_key", meta.get("canonical_key", ""))
+            file_name = meta.get("file_name", "")
+            source_dir = meta.get("source_dir", "")
+            if not file_name and "/" in canonical_key:
+                source_dir, file_name = canonical_key.split("/", 1)
+            if source_dir and source_dir != "bank":
+                continue
+            if canonical_key and "/" in canonical_key and not canonical_key.startswith("bank/"):
+                continue
+            qid = file_name.replace(".md", "")
+            if canonical_key.startswith("bank/") or source_dir == "bank":
+                qid = qid or canonical_key.removeprefix("bank/").replace(".md", "")
             if qid:
                 full = self.get(qid)
                 if full:
@@ -803,17 +839,21 @@ class QuestionBank:
             logger.debug("检索失败：%s", e)
             return []
 
-    def _call_llm(self, system: str, user: str) -> str | None:
-        """调用 LLM（litellm），失败返回 None。"""
+    def _call_llm(self, system: str, user: str) -> LlmCallResult:
+        """调用配置的出题 LLM；失败返回 pipeline 可消费的结果对象。"""
+        model = os.environ.get("EXAM_MEMORY_LLM_MODEL", "").strip()
+        if not model:
+            return LlmCallResult.failure("LLM 不可用：未配置 EXAM_MEMORY_LLM_MODEL")
+
         try:
             from litellm import completion
         except ImportError:
             logger.info("litellm 未安装，跳过 LLM 调用（pip install '.[generate]'）")
-            return None
+            return LlmCallResult.failure("LLM 不可用：litellm 未安装")
 
         try:
             resp = completion(
-                model="openai/gpt-4o-mini",
+                model=model,
                 messages=[
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
@@ -821,10 +861,10 @@ class QuestionBank:
                 temperature=0.7,
                 max_tokens=4000,
             )
-            return resp.choices[0].message.content or ""
+            return LlmCallResult.success(resp.choices[0].message.content or "")
         except Exception as e:
             logger.error("LLM 调用失败：%s", e)
-            return None
+            return LlmCallResult.failure(f"LLM 调用失败：{e}")
 
     def _fallback_search(
         self, query: str, limit: int, q_type: str | None

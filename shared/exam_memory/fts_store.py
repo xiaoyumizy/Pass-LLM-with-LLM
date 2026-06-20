@@ -124,6 +124,7 @@ class FTSStore:
         *,
         limit: int = 10,
         type_filter: str | None = None,
+        source_filter: str | None = None,
     ) -> list[dict[str, Any]]:
         """BM25 词法检索。
 
@@ -151,6 +152,10 @@ class FTSStore:
         if type_filter:
             sql += "AND type = ? "
             params.append(type_filter)
+
+        if source_filter and source_filter != "all":
+            sql += "AND canonical_key LIKE ? "
+            params.append(f"{source_filter}/%")
 
         sql += "ORDER BY score LIMIT ?"
         params.append(limit)
